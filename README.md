@@ -19,6 +19,7 @@ samples for both.
 | [IdentityContext](IdentityContext) | Windows/domain identity helpers, plus current-web-request user/IP/base-URL access via a small seam interface that works on both classic ASP.NET and ASP.NET Core |
 | [AppDiagnostics](AppDiagnostics) | Static facade over `Debug` output / an optional `ILogger`, with exception-formatting and JS-string-escaping helpers |
 | [SendingEmailViaMicrosoftGraph](SendingEmailViaMicrosoftGraph) | Sending email via Microsoft Graph instead of SMTP: an Azure Function relay, client samples for it, and standalone class libraries for calling Graph directly |
+| [SmartyStreetsLookup](SmartyStreetsLookup) | US/international address validation via SmartyStreets: an Azure Function relay, client samples for it, and standalone class libraries for calling SmartyStreets directly |
 
 ## Common threads
 
@@ -26,9 +27,10 @@ samples for both.
   `CleanValidation`, `IdentityContext`, and `AppDiagnostics` are each one
   project/one codebase targeting `net48;net6.0;net8.0;net10.0` at once -
   everything in them only needs dependencies available on every target.
-  `SendingEmailViaMicrosoftGraph` is the exception: its Azure Function is
-  .NET 10-only (the isolated worker model), so it ships separate class
-  libraries for .NET Framework vs. .NET 6+ callers instead.
+  `SendingEmailViaMicrosoftGraph` and `SmartyStreetsLookup` are the
+  exception: their Azure Functions are .NET 10-only (the isolated worker
+  model), so each ships separate class libraries for .NET Framework vs.
+  .NET 6+ callers instead.
 - **Graceful degradation over exceptions**, where that fits the problem.
   `CleanValidation`'s parsing helpers return a sensible default (`0`,
   `string.Empty`, `DateTime.MinValue`) instead of throwing, and

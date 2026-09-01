@@ -1,0 +1,13 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+
+    "SmartyStreetsUsAuthId": "<your-us-auth-id>",
+    "SmartyStreetsUsAuthToken": "<your-us-auth-token>",
+
+    "SmartyStreetsInternationalAuthId": "<your-international-auth-id>",
+    "SmartyStreetsInternationalAuthToken": "<your-international-auth-token>"
+  }
+}
