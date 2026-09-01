@@ -6,8 +6,7 @@ namespace AppDiagnostics
 {
     /// <summary>
     /// A small, static facade over debug output and an optional <see cref="ILogger"/>, plus
-    /// exception-formatting and JS-string-escaping helpers. See README.md for what was changed
-    /// or removed versus the internal utility this is based on.
+    /// exception-formatting and JS-string-escaping helpers. See README.md for scope and usage.
     /// </summary>
     public static class AppDiagnostics
     {
