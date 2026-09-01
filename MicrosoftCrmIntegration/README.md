@@ -42,11 +42,10 @@ through.
 ## No SDK
 
 None of this uses the official Dataverse SDK
-(`Microsoft.PowerPlatform.Dataverse.Client`/`Microsoft.Xrm.Sdk`) that the
-internal tooling this is based on used. Dataverse also exposes a true
-REST/OData Web API, so every piece here is a plain `HttpClient` + bearer
-token, the same approach used for the Shopify and SmartyStreets
-integrations elsewhere in this repo - no SDK dependency, no
+(`Microsoft.PowerPlatform.Dataverse.Client`/`Microsoft.Xrm.Sdk`). Dataverse
+also exposes a true REST/OData Web API, so every piece here is a plain
+`HttpClient` + bearer token, the same approach used for the Shopify and
+SmartyStreets integrations elsewhere in this repo - no SDK dependency, no
 `ServiceClient`/`Entity`/`QueryExpression` object model.
 
 ## Authentication

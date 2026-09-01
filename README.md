@@ -1,10 +1,10 @@
 # DotNetCode
 
-Sample .NET code and small class libraries, written to be portfolio-friendly:
-each one is based on a real internal utility, generalized and stripped of any
-proprietary business logic, credentials, or organization-specific behavior
-(documented per-project below, in each one's own "what changed from the
-original" section).
+A collection of sample .NET libraries and Azure Functions, covering common
+integration and infrastructure patterns: resilient data access, input
+validation, identity/context helpers, diagnostics, and generic CRUD/webhook
+integrations with third-party platforms (Microsoft Graph, SmartyStreets,
+Shopify, Microsoft Dataverse, Stripe).
 
 Every library here is multi-targeted for **.NET Framework 4.8** and
 **.NET 6 / 8 / 10** from a single codebase, and ships with runnable console
@@ -41,11 +41,11 @@ samples for both.
   `ResilientSqlAccess` returns a `SqlResult` with `Succeeded`/`ErrorMessage`
   instead of throwing on a SQL failure - so callers check a flag instead of
   wrapping every call in try/catch.
-- **Configuration over hardcoding.** Anywhere the original utility baked in
-  one organization's specific values (a domain-to-email mapping, a serial
-  number format, retryable SQL error codes), the generalized version exposes
-  it as a parameter, delegate, or dictionary the caller populates - see each
-  project's README for specifics.
+- **Configuration over hardcoding.** Organization-specific values (a
+  domain-to-email mapping, a structured-code format, retryable SQL error
+  codes) are exposed as a parameter, delegate, or dictionary the caller
+  populates, rather than baked into the library - see each project's README
+  for specifics.
 - **Every sample runs standalone.** `cd Samples/NetFramework48 && dotnet run`
   or `cd Samples/Net8Plus && dotnet run` inside each project folder - no
   shared solution-wide setup required.

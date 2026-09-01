@@ -112,16 +112,6 @@ If the domain isn't in the map, it falls back to guessing
 a hostname) - a reasonable default, but you should populate the map for domains
 you actually care about.
 
-## What changed from the original
-
-The internal utility this is based on had a `GetCurrentUserDomainEmail` with
-one specific company's domain names and even a specific machine-name-to-username
-override hardcoded directly in the method body - proprietary and meaningless
-outside that organization. It's been rebuilt as the configurable
-`DomainToEmailSuffixMap` / `UserNameOverrideResolver` shown above: same shape
-and purpose (resolve an email address from a domain logon), fully
-organization-agnostic, empty by default.
-
 ## Running the samples
 
 ```

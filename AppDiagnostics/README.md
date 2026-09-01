@@ -46,16 +46,19 @@ library's README for the full explanation of the pattern.)
 | `GetTimeoutException(TimeoutException)` | Same rendering, kept as a distinctly named overload for timeout-specific call sites. |
 | `EscapeJsString(string?)` | Escapes a string for safe embedding inside a JS string literal - guards against both breaking out of the string literal and a literal `</script>` terminating the enclosing block early. |
 
-## What changed from the original
+## Scope
 
-| Removed / changed | Why |
+This library deliberately stays focused on exception formatting and JS
+string escaping - a few related concerns are intentionally out of scope:
+
+| Not included | Why |
 |---|---|
-| `GetFaultException(FaultException<Microsoft.Xrm.Sdk.OrganizationServiceFault>)` | Required a Dynamics 365/CRM SDK dependency for one narrow method. Rather than pull a WCF+CRM dependency into every consumer of this library, it's dropped - if you need WCF fault formatting, `GetStandardException(ex)` covers the base exception fields, and you can append `ex.Detail`-specific fields yourself at the call site. |
-| `MessageBox(text, redirectUrl)` | Wrote an inline `<script>alert(...)</script>` via classic ASP.NET's `HttpContext.Current.Response`. Tied to `System.Web` (no .NET 6+ equivalent) and a dated pattern even on .NET Framework - modern apps should use a proper notification/toast mechanism in their UI framework. `EscapeJsString` (kept) is the reusable piece if you're rolling your own. |
-| `SetSelectedValue(DropDownList, ...)` | Tied to `System.Web.UI.WebControls.DropDownList` (WebForms-only) and duplicated verbatim in the original `CUtilityCleanValidation` - out of scope for a diagnostics library on any framework. |
-| `GetScreenOutputText` | Overlapped with `AddHtmlLineBreak` in the sibling [CleanValidation](../CleanValidation) library. Text-transformation helpers now live there; this library only formats exceptions and JS strings. |
-| `DeveloperEmailAddress` constant | A hardcoded personal email address with no functional use in the file - removed. |
-| `ShowInfoAndError` -> `Log` | Renamed: "Show" implied UI display, but the method only ever wrote to `Debug`/`ILogger`. |
+| WCF/SOAP fault formatting (e.g. Dynamics/CRM-style `FaultException<T>`) | Would require pulling a WCF-specific SDK dependency into every consumer of this library for one narrow method. `GetStandardException(ex)` covers the base exception fields for any exception type; append fault-specific fields yourself at the call site if needed. |
+| UI display helpers (message boxes, dropdown selection, etc.) | Tied to a specific UI framework (classic ASP.NET `System.Web`, WebForms) with no cross-framework equivalent, and a dated pattern regardless - modern apps should use their UI framework's own notification/toast mechanism. `EscapeJsString` (kept) is the reusable piece if you're rolling your own. |
+| General text transformation (line breaks, HTML escaping, etc.) | Lives in the sibling [CleanValidation](../CleanValidation) library instead; this library only formats exceptions and JS strings. |
+
+`Log(source, message, isError)` is named for what it does - it writes to
+`Debug`/`ILogger`, not a UI surface.
 
 ## Running the samples
 

@@ -30,10 +30,8 @@ if (!CV.ValidateEmail(email)) return BadRequest("Invalid email.");
 ```
 
 `using CV = CleanValidation.CleanValidation;` sidesteps the fact that the
-namespace and the static class share a name (a deliberate nod to the original
-codebase's `CUtilityCleanValidation` naming convention) - a plain
-`using CleanValidation;` also compiles, but you'd need to write
-`CleanValidation.CleanValidation.Int32(...)`.
+namespace and the static class share a name - a plain `using CleanValidation;`
+also compiles, but you'd need to write `CleanValidation.CleanValidation.Int32(...)`.
 
 ## What's here
 
@@ -68,20 +66,28 @@ A couple worth calling out:
   and sort a list by it. Pass in your own length/offset values instead of the
   library hardcoding a specific format.
 
-## What was intentionally left out
+## Scope
 
-The original internal utility this is based on had several methods that were
-either proprietary business logic, tied to a deprecated UI framework, or simply
-not worth carrying forward. Rather than silently dropping functionality, here's
-what changed and why:
+This library deliberately stays focused on cleaning/validating/formatting
+values that are already in memory - a few related concerns are intentionally
+out of scope:
 
-| Removed / changed | Why |
+| Not included | Why |
 |---|---|
-| `EscapeQuoteTextForSql` / `RemoveAposFromText` | Escaping text for inline SQL string literals is a SQL-injection-shaped foot-gun. Every real call site should use parameterized queries instead (see the [ResilientSqlAccess](../ResilientSqlAccess) library) - this library shouldn't offer an easy path around that. |
-| `SetSelectedValue(DropDownList, ...)` | Tied to `System.Web.UI.WebControls.DropDownList`, a WebForms-only type with no .NET 6+ equivalent, and out of scope for a data-cleaning library regardless of framework. The equivalent one-liner for any `IEnumerable` of options is `items.FirstOrDefault(i => i.Value == selectedValue)`. |
-| `ExtractSubAssemblyNumberFromSerial` / hardcoded 17-char serial format | Was hardcoded to one company's specific device serial-number layout (fixed length, fixed offset). Kept the *shape* of the feature as `ExtractStructuredCodeSegment`/`SortByStructuredCodeSegmentDescending`, parameterized so any fixed-width code convention can use it - see the sample apps for a worked example. |
-| `FixUrl`'s "(guess)" annotation handling | The original had a hardcoded business convention (a literal `"guess"` marker some data entry process attached to unconfirmed URLs). Generalized into `NormalizeUrl`'s optional `preserveAnnotationSuffix` parameter, so callers with a similar convention supply their own marker instead of it being baked in. |
-| `GenFileName`'s default prefix | Defaulted to a specific product name; now defaults to `"Export"`. |
+| SQL string-literal escaping | Escaping text for inline SQL string literals is a SQL-injection-shaped foot-gun. Every real call site should use parameterized queries instead (see the [ResilientSqlAccess](../ResilientSqlAccess) library) - this library shouldn't offer an easy path around that. |
+| UI control helpers (e.g. dropdown selection) | Tied to `System.Web.UI.WebControls.DropDownList`, a WebForms-only type with no .NET 6+ equivalent, and out of scope for a data-cleaning library regardless of framework. The equivalent one-liner for any `IEnumerable` of options is `items.FirstOrDefault(i => i.Value == selectedValue)`. |
+
+Two methods are generalized rather than tied to one specific format:
+
+- **`ExtractStructuredCodeSegment` / `SortByStructuredCodeSegmentDescending`**
+  pull a fixed-position segment out of a fixed-length code (serial number,
+  SKU, lot code, whatever your domain uses) and sort a list by it - pass in
+  your own length/offset values instead of the library assuming a specific
+  layout.
+- **`NormalizeUrl`**'s optional `preserveAnnotationSuffix` parameter lets a
+  caller supply their own "unconfirmed value" marker convention (e.g. a
+  trailing `"(guess)"` some upstream process attaches) instead of one being
+  baked into the library.
 
 ## Running the samples
 

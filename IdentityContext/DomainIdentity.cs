@@ -7,8 +7,7 @@ namespace IdentityContext
 {
     /// <summary>
     /// Helpers for the current Windows/domain identity and (via <see cref="IWebRequestContext"/>)
-    /// the current web request's user, client IP, and site URL. See README.md for what was
-    /// changed or removed versus the internal utility this is based on.
+    /// the current web request's user, client IP, and site URL. See README.md for usage.
     /// </summary>
     public static class DomainIdentity
     {

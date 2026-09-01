@@ -79,12 +79,10 @@ set SMARTYSTREETS_INTL_AUTH_TOKEN=your-international-auth-token
 dotnet run
 ```
 
-## What's here vs. what's not
+## Scope
 
-This library only wraps the two REST endpoints. It does not include the
-country-name-to-ISO-code alias resolution, failure-notification email, or
-telemetry pipeline that similar internal tooling this is based on had -
-those were either tied to unrelated internal infrastructure or unnecessary:
+This library only wraps the two REST endpoints - it does not include
+country-name-to-ISO-code alias resolution, failure-notification email, or a
+telemetry pipeline. A separate country-resolution step isn't needed:
 SmartyStreets' International API already accepts a country name, ISO-2, or
-ISO-3 code directly in the `Country` field, so no separate resolution step
-is needed.
+ISO-3 code directly in the `Country` field.
