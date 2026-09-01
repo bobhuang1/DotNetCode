@@ -1,0 +1,20 @@
+## Build results
+bin/
+obj/
+
+## Visual Studio
+.vs/
+*.user
+*.suo
+
+## Azure Functions local files (never commit real secrets)
+local.settings.json
+azurite-data/
+
+## Rider / VS Code
+.idea/
+.vscode/
+
+## OS files
+.DS_Store
+Thumbs.db
