@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net6.0;net8.0;net10.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>ShopifyIntegration.NetCore</RootNamespace>
+    <AssemblyName>ShopifyIntegration.NetCore</AssemblyName>
+    <DefaultItemExcludes>$(DefaultItemExcludes);Sample\**\*</DefaultItemExcludes>
+  </PropertyGroup>
+
+</Project>

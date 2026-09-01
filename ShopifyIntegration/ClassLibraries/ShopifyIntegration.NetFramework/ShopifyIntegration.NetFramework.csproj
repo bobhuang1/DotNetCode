@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <RootNamespace>ShopifyIntegration.NetFramework</RootNamespace>
+    <AssemblyName>ShopifyIntegration.NetFramework</AssemblyName>
+    <DefaultItemExcludes>$(DefaultItemExcludes);Sample\**\*</DefaultItemExcludes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="System.Net.Http" />
+  </ItemGroup>
+
+</Project>
