@@ -21,6 +21,7 @@ samples for both.
 | [SendingEmailViaMicrosoftGraph](SendingEmailViaMicrosoftGraph) | Sending email via Microsoft Graph instead of SMTP: an Azure Function relay, client samples for it, and standalone class libraries for calling Graph directly |
 | [SmartyStreetsLookup](SmartyStreetsLookup) | US/international address validation via SmartyStreets: an Azure Function relay, client samples for it, and standalone class libraries for calling SmartyStreets directly |
 | [ShopifyIntegration](ShopifyIntegration) | Generic CRUD (customers, orders, draft orders, products) against the Shopify Admin REST API: an Azure Function relay, client samples for it, and standalone class libraries for calling Shopify directly |
+| [MicrosoftCrmIntegration](MicrosoftCrmIntegration) | Generic CRUD against the Microsoft Dataverse Web API (any table - accounts, contacts, incidents, products, price lists): an Azure Function relay, client samples for it, and standalone class libraries for calling Dataverse directly |
 
 ## Common threads
 
@@ -28,10 +29,11 @@ samples for both.
   `CleanValidation`, `IdentityContext`, and `AppDiagnostics` are each one
   project/one codebase targeting `net48;net6.0;net8.0;net10.0` at once -
   everything in them only needs dependencies available on every target.
-  `SendingEmailViaMicrosoftGraph`, `SmartyStreetsLookup`, and
-  `ShopifyIntegration` are the exception: their Azure Functions are
-  .NET 10-only (the isolated worker model), so each ships separate class
-  libraries for .NET Framework vs. .NET 6+ callers instead.
+  `SendingEmailViaMicrosoftGraph`, `SmartyStreetsLookup`,
+  `ShopifyIntegration`, and `MicrosoftCrmIntegration` are the exception:
+  their Azure Functions are .NET 10-only (the isolated worker model), so
+  each ships separate class libraries for .NET Framework vs. .NET 6+
+  callers instead.
 - **Graceful degradation over exceptions**, where that fits the problem.
   `CleanValidation`'s parsing helpers return a sensible default (`0`,
   `string.Empty`, `DateTime.MinValue`) instead of throwing, and
