@@ -22,6 +22,7 @@ samples for both.
 | [SmartyStreetsLookup](SmartyStreetsLookup) | US/international address validation via SmartyStreets: an Azure Function relay, client samples for it, and standalone class libraries for calling SmartyStreets directly |
 | [ShopifyIntegration](ShopifyIntegration) | Generic CRUD (customers, orders, draft orders, products) against the Shopify Admin REST API: an Azure Function relay, client samples for it, and standalone class libraries for calling Shopify directly |
 | [MicrosoftCrmIntegration](MicrosoftCrmIntegration) | Generic CRUD against the Microsoft Dataverse Web API (any table - accounts, contacts, incidents, products, price lists): an Azure Function relay, client samples for it, and standalone class libraries for calling Dataverse directly |
+| [StripeWebhook](StripeWebhook) | Generic Stripe webhook receiver: signature verification (hand-rolled HMAC-SHA256, no SDK) and a no-op dispatch covering a broad catalog of common Stripe events, plus client samples that build and sign test events |
 
 ## Common threads
 
