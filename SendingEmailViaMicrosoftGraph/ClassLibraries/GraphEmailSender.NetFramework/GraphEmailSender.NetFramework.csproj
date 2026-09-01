@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <RootNamespace>SendingEmailViaMicrosoftGraph.EmailSender</RootNamespace>
+    <AssemblyName>SendingEmailViaMicrosoftGraph.EmailSender.NetFramework</AssemblyName>
+    <DefaultItemExcludes>$(DefaultItemExcludes);Sample\**\*</DefaultItemExcludes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Azure.Core" Version="1.50.0" />
+    <PackageReference Include="Microsoft.Graph" Version="5.61.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.3" />
+  </ItemGroup>
+
+</Project>
