@@ -1,0 +1,59 @@
+name: deploy-web
+
+# CI/CD for the ShopWeb Razor front end (storefront + admin sub-site UI).
+# Same shape as deploy-api: build -> deploy staging -> smoke -> swap.
+
+on:
+  push:
+    branches: [main]
+    paths: ["UnifiedShopping/src/ShopWeb/**"]
+  workflow_dispatch:
+
+env:
+  AZURE_WEBAPP_NAME: app-unifiedshopping-web
+  AZURE_RESOURCE_GROUP: rg-shop
+  DOTNET_VERSION: "8.0.x"
+  PROJECT_PATH: "UnifiedShopping/src/ShopWeb/ShopWeb.csproj"
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore + build + test
+        run: |
+          dotnet restore UnifiedShopping/UnifiedShopping.sln
+          dotnet build UnifiedShopping/UnifiedShopping.sln -c Release --no-restore
+          dotnet test UnifiedShopping/tests/ShopCommon.Tests/ShopCommon.Tests.csproj -c Release --no-build
+
+      - name: Publish
+        run: dotnet publish ${{ env.PROJECT_PATH }} -c Release -o ./publish/web
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to staging
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          slot-name: staging
+          package: ./publish/web
+
+      - name: Smoke test + swap
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://${{ env.AZURE_WEBAPP_NAME }}-staging.azurewebsites.net/health) || true
+          if [ "$STATUS" = "200" ]; then
+            az webapp deployment slot swap \
+              --name ${{ env.AZURE_WEBAPP_NAME }} \
+              --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+              --slot staging --target-slot production
+          else
+            echo "Smoke test failed with $STATUS"; exit 1
+          fi

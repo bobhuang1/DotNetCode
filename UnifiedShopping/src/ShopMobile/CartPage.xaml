@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="ShopMobile.CartPage"
+             Title="Your Cart">
+    <Grid RowDefinitions="*,Auto" Padding="16" RowSpacing="12"
+          BackgroundColor="{StaticResource PaperColor}">
+
+        <CollectionView Grid.Row="0" ItemsSource="{Binding Items}" SelectionMode="None">
+            <CollectionView.EmptyView>
+                <Label Text="Your cart is empty." TextColor="#77778A" />
+            </CollectionView.EmptyView>
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Border Stroke="#E4E0DA" StrokeShape="RoundRectangle 8" Margin="0,4" Padding="12">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label Text="{Binding Display, Mode=OneWay}" VerticalOptions="Center" />
+                            <Label Grid.Column="1" Text="{Binding LineTotalDisplay, Mode=OneWay}"
+                                   FontAttributes="Bold" VerticalOptions="Center" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <VerticalStackLayout Grid.Row="1" Spacing="10">
+            <Label Text="{Binding TotalsText, Mode=OneWay}" FontAttributes="Bold" />
+            <Button Text="Place order (Stripe)" Command="{Binding CheckoutCommand}" />
+        </VerticalStackLayout>
+    </Grid>
+</ContentPage>

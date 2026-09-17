@@ -1,0 +1,71 @@
+@page
+@model CartModel
+@{
+    ViewData["Title"] = "Your cart";
+}
+
+<h1>Your cart</h1>
+
+@if (Model.Cart.Items.Count == 0)
+{
+    <p>Your cart is empty. <a asp-page="/Index">Keep shopping</a>.</p>
+    return;
+}
+
+<table class="cart-table">
+    <thead>
+        <tr><th>Item</th><th>Price</th><th>Qty</th><th>Total</th><th></th></tr>
+    </thead>
+    <tbody>
+    @foreach (var item in Model.Cart.Items)
+    {
+        <tr>
+            <td>@item.Name <span class="muted">(@item.Color, @item.Size - @item.Sku)</span></td>
+            <td>@PricingCalculator.FormatMoney(item.UnitPrice)</td>
+            <td>
+                <form method="post" asp-page-handler="Update" class="inline">
+                    <input type="hidden" name="variantId" value="@item.VariantId" />
+                    <input type="number" name="quantity" value="@item.Quantity" min="0" max="10" />
+                    <button type="submit" class="button small">Update</button>
+                </form>
+            </td>
+            <td>@PricingCalculator.FormatMoney(item.LineTotal)</td>
+            <td>
+                <form method="post" asp-page-handler="Remove" class="inline">
+                    <input type="hidden" name="variantId" value="@item.VariantId" />
+                    <button type="submit" class="button small danger">Remove</button>
+                </form>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
+
+<div class="cart-summary">
+    <form method="post" asp-page-handler="Coupon" class="inline">
+        <input type="text" name="couponCode" placeholder="16-character coupon code" maxlength="16" value="@Model.Cart.CouponCode" />
+        <button type="submit" class="button">Apply coupon</button>
+        @if (Model.Cart.CouponMessage is { } message)
+        {
+            <span class="muted">@message</span>
+        }
+    </form>
+
+    <dl>
+        <dt>Subtotal</dt><dd>@PricingCalculator.FormatMoney(Model.Cart.Totals.Subtotal)</dd>
+        @if (Model.Cart.Totals.Discount > 0)
+        {
+            <dt>Discount (@Model.Cart.Totals.CouponPercentOff%)</dt>
+            <dd>-@PricingCalculator.FormatMoney(Model.Cart.Totals.Discount)</dd>
+        }
+        @if (Model.ShippingRate is { } rate)
+        {
+            <dt>Shipping (@rate.CarrierName @rate.ServiceName)</dt>
+            <dd>@(rate.Cost == 0 ? "FREE" : PricingCalculator.FormatMoney(rate.Cost))</dd>
+        }
+        <dt>Tax (est.)</dt><dd>@PricingCalculator.FormatMoney(Model.Cart.Totals.Tax)</dd>
+        <dt class="grand">Total</dt><dd class="grand">@PricingCalculator.FormatMoney(Model.Cart.Totals.GrandTotal)</dd>
+    </dl>
+
+    <a asp-page="/Checkout" class="button primary">Check out</a>
+</div>

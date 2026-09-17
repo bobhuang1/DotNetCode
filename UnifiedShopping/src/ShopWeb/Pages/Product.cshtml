@@ -1,0 +1,30 @@
+@page
+@model ProductModel
+@{
+    ViewData["Title"] = Model.Product?.Name ?? "Product";
+}
+
+@if (Model.Product is null)
+{
+    <p>Product not found.</p>
+    return;
+}
+
+<div class="product-detail">
+    <div class="product-swatch large" style="background:linear-gradient(135deg,#8a2be2 0%,#4169e1 60%,#d8bfd8 100%);"></div>
+    <div>
+        <h1>@Model.Product.Name</h1>
+        <p class="material">@Model.Product.Material</p>
+        <p class="price">@PricingCalculator.FormatMoney(Model.Product.Price)</p>
+
+        <form method="post">
+            <label for="variant">Color / size</label>
+            <select id="variant" name="variantId" asp-items="Model.VariantOptions"></select>
+
+            <label for="qty">Quantity</label>
+            <input id="qty" name="quantity" type="number" min="1" max="10" value="1" />
+
+            <button type="submit" class="button primary">Add to cart</button>
+        </form>
+    </div>
+</div>

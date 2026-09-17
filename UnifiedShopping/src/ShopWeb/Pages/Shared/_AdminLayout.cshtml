@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Silk &amp; Loom Admin</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="admin">
+<header class="admin-header">
+    <span class="brand">Silk &amp; Loom <strong>Admin</strong></span>
+    <nav>
+        <a asp-page="/Admin/Index">Orders</a>
+        <a asp-page="/Admin/Coupons">Coupons</a>
+        <a asp-page="/Admin/Carriers">Carriers</a>
+        <a asp-page="/Index" class="muted">back to storefront</a>
+    </nav>
+</header>
+<main class="container">
+    @RenderBody()
+</main>
+</body>
+</html>

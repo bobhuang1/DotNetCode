@@ -1,0 +1,103 @@
+@page
+@model ShopWeb.Pages.Admin.OrderModel
+@{
+    ViewData["Title"] = $"Order {Model.Order?.OrderNumber}";
+    Layout = "_AdminLayout";
+}
+
+@if (Model.Order is null)
+{
+    <p>Order not found.</p>
+    return;
+}
+
+<h1>@Model.Order.OrderNumber <span class="badge">@Model.Order.Status</span></h1>
+
+<div class="admin-grid">
+    <div>
+        <h2>Items</h2>
+        <ul>
+            @foreach (var line in Model.Order.Lines)
+            {
+                <li>@line.Quantity &times; @line.Name (@line.Sku) - @PricingCalculator.FormatMoney(line.LineTotal)</li>
+            }
+        </ul>
+
+        <h2>Ship to</h2>
+        <p>
+            @Model.Order.ShipTo.Name<br />
+            @Model.Order.ShipTo.Line1 @Model.Order.ShipTo.Line2<br />
+            @Model.Order.ShipTo.City, @Model.Order.ShipTo.State @Model.Order.ShipTo.PostalCode, @Model.Order.ShipTo.Country
+        </p>
+
+        <h2>Timeline</h2>
+        <ul class="timeline">
+            @foreach (var ev in Model.Order.Events.OrderBy(e => e.TimestampUtc))
+            {
+                <li><strong>@ev.TimestampUtc.ToString("g")</strong> (@ev.Actor) - @ev.Message</li>
+            }
+        </ul>
+    </div>
+
+    <div>
+        <h2>Fulfillment</h2>
+        @if (Model.Order.Status == OrderStatus.PendingPayment)
+        {
+            <p class="muted">Waiting for payment confirmation.</p>
+        }
+        else
+        {
+            <form method="post" asp-page-handler="Label">
+                <label for="carrier">Buy shipping label from</label>
+                <select id="carrier" name="carrier">
+                    <option value="Ups">UPS</option>
+                    <option value="FedEx">FedEx</option>
+                    <option value="Usps">USPS</option>
+                    <option value="Custom">Custom carrier</option>
+                </select>
+                <button type="submit" class="button primary">Create label</button>
+            </form>
+        }
+
+        @if (Model.LabelResult is { } label)
+        {
+            <div class="label-result">
+                <p><strong>@label.TrackingNumber</strong> (@PricingCalculator.FormatMoney(label.Cost))</p>
+                <a class="button" href="data:application/pdf;base64,@label.LabelPdfBase64" download="label-@(Model.Order.OrderNumber).pdf">Download label PDF</a>
+            </div>
+        }
+
+        @foreach (var shipment in Model.Order.Shipments)
+        {
+            <div class="shipment">
+                <p>@shipment.CarrierName - @shipment.TrackingNumber (@shipment.Status)</p>
+                <form method="post" asp-page-handler="Ship">
+                    <input type="hidden" name="shipmentId" value="@shipment.Id" />
+                    <button type="submit" class="button small" @(shipment.Status == ShipmentStatus.LabelCreated ? "" : "disabled")>Mark picked up / shipped</button>
+                </form>
+                <form method="post" asp-page-handler="Tracking">
+                    <input type="hidden" name="shipmentId" value="@shipment.Id" />
+                    <button type="submit" class="button small">Refresh tracking</button>
+                </form>
+            </div>
+        }
+
+        <h2>Returns &amp; claims</h2>
+        @if (Model.Order.Return is { } ret)
+        {
+            <p>Return: @ret.Status - refund @PricingCalculator.FormatMoney(ret.RefundAmount) @(ret.ClaimReference is null ? "" : $"- claim {ret.ClaimReference}")</p>
+        }
+        else
+        {
+            <form method="post" asp-page-handler="Return">
+                <input name="reason" placeholder="Reason" required />
+                <select name="resolution">
+                    <option value="Refund">Refund</option>
+                    <option value="Replace">Replace</option>
+                </select>
+                <input name="quantity" type="number" min="1" value="1" />
+                <button type="submit" class="button small">Approve return</button>
+            </form>
+        }
+    </div>
+</div>

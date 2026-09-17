@@ -1,0 +1,48 @@
+@page
+@model ShopWeb.Pages.Admin.IndexModel
+@{
+    ViewData["Title"] = "Order queue";
+    Layout = "_AdminLayout";
+}
+
+<h1>Order queue</h1>
+
+<form method="get" class="inline">
+    <select name="status">
+        <option value="">All statuses</option>
+        @foreach (OrderStatus status in Enum.GetValues(typeof(OrderStatus)))
+        {
+            <option value="@status" selected="@(Model.StatusFilter == status)">@status</option>
+        }
+    </select>
+    <button type="submit" class="button small">Filter</button>
+</form>
+
+<table class="admin-table">
+    <thead>
+        <tr><th>Order</th><th>Placed</th><th>Channel</th><th>Total</th><th>Status</th><th>Payment</th><th>Fulfillment</th></tr>
+    </thead>
+    <tbody>
+    @foreach (var order in Model.Orders)
+    {
+        <tr>
+            <td><a asp-page="/Admin/Order" asp-route-id="@order.Id">@order.OrderNumber</a></td>
+            <td>@order.CreatedUtc.ToString("g")</td>
+            <td>@order.Channel</td>
+            <td>@PricingCalculator.FormatMoney(order.GrandTotal)</td>
+            <td><span class="badge">@order.Status</span></td>
+            <td>@(order.Payment is null ? "-" : $"{order.Payment.Provider}: {order.Payment.Status}")</td>
+            <td>
+                @if (order.Status == OrderStatus.Paid)
+                {
+                    <span class="muted">needs label</span>
+                }
+                else
+                {
+                    @(order.Shipments.Count == 0 ? "-" : string.Join(", ", order.Shipments.Select(s => s.TrackingNumber)))
+                }
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
