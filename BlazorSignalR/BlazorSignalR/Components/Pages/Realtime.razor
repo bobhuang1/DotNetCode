@@ -1,0 +1,138 @@
+@page "/realtime"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.SignalR.Client
+@using BlazorSignalR.Services
+@inject NavigationManager Navigation
+
+<PageTitle>Realtime</PageTitle>
+
+<h1>Realtime updates over SignalR</h1>
+
+<p>
+    This Blazor Server (interactive) component opens its own SignalR connection to
+    <code>/hubs/notifications</code> using the <code>Microsoft.AspNetCore.SignalR.Client</code>
+    library. A hosted service pushes telemetry every three seconds to every connected
+    client; type a message below to broadcast it to all of them.
+</p>
+
+<div class="card">
+    <div class="card-header">
+        Connection: <strong>@Status</strong>
+        @if (Status == "Reconnecting")
+        {
+            <span class="text-warning">– reconnecting automatically.</span>
+        }
+    </div>
+    <div class="card-body">
+        <div class="input-group mb-2">
+            <input class="form-control" @bind="Draft" @onkeydown="OnKeyDown"
+                   placeholder="Broadcast a message to everyone connected…" />
+            <button class="btn btn-primary" @onclick="Broadcast" disabled="@(Status != "Connected")">Send</button>
+        </div>
+    </div>
+</div>
+
+@if (Items.Count == 0)
+{
+    <p class="mt-3 text-muted">Nothing received yet. Keep this page open and open another tab.</p>
+}
+else
+{
+    <ul class="list-group mt-3">
+        @for (var i = Items.Count - 1; i >= 0; i--)
+        {
+            <li class="list-group-item">@Items[i]</li>
+        }
+    </ul>
+}
+
+@code {
+    private readonly List<string> Items = [];
+    private HubConnection? Hub;
+    private string Draft = string.Empty;
+    private string Status = "Disconnected";
+
+    // The page is prerendered once, then rendered interactively, so only start
+    // the SignalR connection on the first interactive render.
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || Hub is not null)
+        {
+            return;
+        }
+
+        await ConnectAsync();
+        StateHasChanged();
+    }
+
+    private async Task ConnectAsync()
+    {
+        var hub = new HubConnectionBuilder()
+            .WithUrl(Navigation.ToAbsoluteUri("/hubs/notifications"))
+            .WithAutomaticReconnect()
+            .Build();
+
+        hub.On<TelemetryUpdate>("telemetry", update =>
+            AddItem($"telemetry: {update.Label} = {update.Value}% (at {update.Timestamp:HH:mm:ss})"));
+        hub.On<string>("status", message => AddItem($"hub: {message}"));
+        hub.On<string, string>("userMessage", (fromId, message) =>
+            AddItem($"from {fromId[..Math.Min(6, fromId.Length)]}…: {message}"));
+
+        hub.Reconnecting += _ => { Status = "Reconnecting"; InvokeAsync(StateHasChanged); return Task.CompletedTask; };
+        hub.Reconnected += _ => { Status = "Reconnected"; InvokeAsync(StateHasChanged); return Task.CompletedTask; };
+        hub.Closed += _ => { Status = "Disconnected"; InvokeAsync(StateHasChanged); return Task.CompletedTask; };
+
+        try
+        {
+            await hub.StartAsync();
+            Status = "Connected";
+            Hub = hub;
+        }
+        catch (Exception ex)
+        {
+            Status = $"Failed: {ex.Message}";
+            await hub.DisposeAsync();
+        }
+    }
+
+    private void AddItem(string text)
+    {
+        Items.Add(text);
+        if (Items.Count > 50)
+        {
+            Items.RemoveRange(0, Items.Count - 50);
+        }
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task Broadcast() => await SendAsync(Draft);
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await SendAsync(Draft);
+        }
+    }
+
+    private async Task SendAsync(string message)
+    {
+        if (string.IsNullOrWhiteSpace(message) || Hub is null || Hub.State != HubConnectionState.Connected)
+        {
+            return;
+        }
+
+        await Hub.SendAsync("BroadcastFromUserAsync", message.Trim());
+        Draft = string.Empty;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (Hub is not null)
+        {
+            await Hub.DisposeAsync();
+            Hub = null;
+        }
+    }
+}

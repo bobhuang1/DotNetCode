@@ -1,0 +1,20 @@
+# Copy to terraform.tfvars and adjust.
+
+subscription_id       = "00000000-0000-0000-0000-000000000000"
+location              = "eastus2"
+location_secondary    = "westus2"
+environment           = "dev"
+name_prefix           = "mcs"
+service_plan_sku      = "P2v3"
+service_plan_capacity = 2
+webapp_dotnet_version = "10.0"
+sql_admin_login       = "sqladmin"
+sql_sku_name          = "BC_Gen5_2"
+sql_max_size_gb       = 100
+sql_failover_grace_minutes = 60
+
+tags = {
+  Team    = "platform"
+  Owner   = "you@example.com"
+  CostCenter = "CC0000"
+}
