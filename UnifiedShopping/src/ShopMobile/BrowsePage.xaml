@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="ShopMobile.BrowsePage"
+             Title="Silk &amp; Loom">
+    <Grid RowDefinitions="Auto,*" Padding="16" RowSpacing="12"
+          BackgroundColor="{StaticResource PaperColor}">
+
+        <Label Grid.Row="0" Text="OEM Scarf Collection"
+               FontSize="24" FontAttributes="Bold" />
+
+        <CollectionView Grid.Row="1" ItemsSource="{Binding Products}"
+                        SelectionMode="None">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Border Stroke="#E4E0DA" StrokeShape="RoundRectangle 10" Margin="0,4" Padding="12">
+                        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" RowSpacing="4">
+                            <Label Grid.Row="0" Grid.ColumnSpan="2"
+                                   Text="{Binding Name}" FontAttributes="Bold" FontSize="16" />
+                            <Label Grid.Row="1" Grid.ColumnSpan="2"
+                                   Text="{Binding Material}" FontSize="13" TextColor="#77778A" />
+                            <Label Grid.Row="2" Grid.Column="0"
+                                   Text="{Binding PriceText, Mode=OneWay}" FontAttributes="Bold" />
+                            <Button Grid.Row="2" Grid.Column="1"
+                                    Text="Add to cart"
+                                    Command="{Binding Source={x:Reference Root}, Path=BindingContext.AddToCartCommand}"
+                                    CommandParameter="{Binding .}" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+</ContentPage>

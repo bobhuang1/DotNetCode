@@ -1,0 +1,33 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Silk & Loom - OEM Scarves";
+}
+
+<section class="hero">
+    <h1>Silk &amp; Loom</h1>
+    <p class="lead">OEM scarves - silk, cashmere-blend, and linen. Made to order, shipped worldwide.</p>
+</section>
+
+<h2>Shop the collection</h2>
+
+<div class="product-grid">
+    @foreach (var product in Model.Products)
+    {
+        <div class="product-card">
+            <div class="product-swatch" style="background:linear-gradient(135deg,#8a2be2 0%,#4169e1 60%,#d8bfd8 100%);"></div>
+            <h3><a asp-page="/Product" asp-route-id="@product.Id">@product.Name</a></h3>
+            <p class="material">@product.Material</p>
+            <p class="price">
+                @PricingCalculator.FormatMoney(product.Price)
+                @if (product.CompareAtPrice is { } compare && compare > product.Price)
+                {
+                    <s>@PricingCalculator.FormatMoney(compare)</s>
+                }
+            </p>
+            <p class="stock @(product.TotalOnHand > 0 ? "" : "out")">
+                @(product.TotalOnHand > 0 ? $"{product.TotalOnHand} in stock" : "Out of stock")
+            </p>
+        </div>
+    }
+</div>

@@ -1,0 +1,53 @@
+@page
+@model OrderStatusModel
+@{
+    ViewData["Title"] = "Order status";
+}
+
+<h1>Order status</h1>
+
+<form method="get" class="inline">
+    <input name="orderNumber" placeholder="Order number, e.g. SO-2026-123456" value="@Model.OrderNumber" />
+    <button type="submit" class="button">Look up</button>
+</form>
+
+@if (Model.Order is { } order)
+{
+    <h2>@order.OrderNumber <span class="badge">@order.Status</span></h2>
+    <p>Placed @order.CreatedUtc.ToString("d") - @PricingCalculator.FormatMoney(order.GrandTotal) via @order.Payment?.Provider</p>
+
+    <h3>Items</h3>
+    <ul>
+        @foreach (var line in order.Lines)
+        {
+            <li>@line.Quantity &times; @line.Name (@line.Sku) - @PricingCalculator.FormatMoney(line.LineTotal)</li>
+        }
+    </ul>
+
+    @if (order.Shipments.Count > 0)
+    {
+        <h3>Shipments</h3>
+        <ul>
+            @foreach (var shipment in order.Shipments)
+            {
+                <li>
+                    @shipment.CarrierName: <strong>@shipment.TrackingNumber</strong> - @shipment.Status
+                    @if (!string.IsNullOrWhiteSpace(shipment.TrackingNumber) && shipment.CarrierName is { } name)
+                    {
+                        <span class="muted">tracking with @name</span>
+                    }
+                </li>
+            }
+        </ul>
+    }
+
+    @if (order.Return is { } ret)
+    {
+        <h3>Return</h3>
+        <p>Status: @ret.Status; refund @PricingCalculator.FormatMoney(ret.RefundAmount) when complete.</p>
+    }
+}
+else if (!string.IsNullOrWhiteSpace(Model.OrderNumber))
+{
+    <p>No order found with that number.</p>
+}

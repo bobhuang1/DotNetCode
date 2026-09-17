@@ -27,6 +27,7 @@ samples for both.
 | [ReactSpa](ReactSpa) | Single-repository single-page application: an ASP.NET Core 10 minimal API served with a Vite + React + TypeScript front end (dev proxy + publish-to-wwwroot MSBuild wiring) |
 | [BlazorSignalR](BlazorSignalR) | .NET 10 Blazor Web App (interactive server) with an explicit SignalR hub, a hosted telemetry broadcaster, and a realtime page that shows server-pushed updates and user broadcasts |
 | [TerraformAzureSite](TerraformAzureSite) | Terraform for a production-shaped Azure site: Front Door Premium + WAF, autoscaling Premium v3 App Service, geo-replicated Azure SQL, Redis, Key Vault, Application Insights, and private endpoints |
+| [UnifiedShopping](UnifiedShopping) | Full-stack e-commerce sample ("Silk & Loom" OEM scarves): web storefront + admin sub-site + MAUI iOS/Android app on one ASP.NET Core API, EF Core, Stripe/PayPal seams, UPS/FedEx/USPS/custom carrier integrations, coupon generation, and Azure CI/CD |
 
 ## Common threads
 

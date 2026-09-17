@@ -1,0 +1,58 @@
+@page
+@model CheckoutModel
+@{
+    ViewData["Title"] = "Checkout";
+}
+
+<h1>Checkout</h1>
+
+@if (Model.PlacedOrder is { } order)
+{
+    <div class="order-confirmation">
+        <h2>Thank you! Order @order.OrderNumber is confirmed.</h2>
+        <p>Total charged: @PricingCalculator.FormatMoney(order.GrandTotal)</p>
+        <p>A confirmation was sent to @order.CustomerEmail.</p>
+        <a asp-page="/OrderStatus" asp-route-orderNumber="@order.OrderNumber">Track your order</a>
+    </div>
+    return;
+}
+
+@if (!ModelState.IsValid)
+{
+    <div class="error">@Model.ErrorMessage</div>
+}
+
+<form method="post">
+    <fieldset>
+        <legend>Shipping address</legend>
+        <input name="shipTo.Name" placeholder="Full name" required />
+        <input name="shipTo.Line1" placeholder="Address line 1" required />
+        <input name="shipTo.Line2" placeholder="Address line 2 (optional)" />
+        <input name="shipTo.City" placeholder="City" required />
+        <input name="shipTo.State" placeholder="State" required />
+        <input name="shipTo.PostalCode" placeholder="ZIP / postal code" required />
+        <input name="shipTo.Country" value="US" maxlength="2" required />
+        <input name="shipTo.Phone" placeholder="Phone (for carrier notifications)" />
+    </fieldset>
+
+    <fieldset>
+        <legend>Shipping method</legend>
+        <select name="carrier">
+            @foreach (var rate in Model.Rates)
+            {
+                <option value="@rate.Carrier">
+                    @rate.CarrierName @rate.ServiceName -
+                    @(rate.Cost == 0 ? "FREE" : PricingCalculator.FormatMoney(rate.Cost)) (@rate.EstimatedDays days)
+                </option>
+            }
+        </select>
+    </fieldset>
+
+    <fieldset>
+        <legend>Payment</legend>
+        <label><input type="radio" name="provider" value="Stripe" checked /> Credit / debit card (Stripe)</label>
+        <label><input type="radio" name="provider" value="PayPal" /> PayPal</label>
+    </fieldset>
+
+    <button type="submit" class="button primary">Place order</button>
+</form>

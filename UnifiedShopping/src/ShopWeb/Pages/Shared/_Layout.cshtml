@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Silk &amp; Loom</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+<header class="site-header">
+    <span class="brand"><a asp-page="/Index">Silk &amp; Loom</a></span>
+    <nav>
+        <a asp-page="/Index">Shop</a>
+        <a asp-page="/OrderStatus">Track order</a>
+        <a asp-page="/Cart">Cart</a>
+        <a asp-page="/Admin/Index" class="muted">Admin</a>
+    </nav>
+</header>
+
+@if (TempData["StatusMessage"] is { } status)
+{
+    <div class="flash">@status</div>
+}
+
+<main class="container">
+    @RenderBody()
+</main>
+
+<footer class="site-footer">
+    <div>
+        <a asp-page="/ShippingPolicy">Shipping policy</a>
+        <a asp-page="/Privacy">Privacy policy</a>
+        <a asp-page="/Terms">Terms &amp; conditions</a>
+    </div>
+    <p class="muted">&copy; 2026 Silk &amp; Loom. OEM scarf studio sample.</p>
+</footer>
+
+<script src="~/js/site.js" asp-append-version="true"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,65 @@
+@page
+@model ShopWeb.Pages.Admin.CouponsModel
+@{
+    ViewData["Title"] = "Coupons";
+    Layout = "_AdminLayout";
+}
+
+<h1>Coupons</h1>
+
+<div class="admin-grid">
+    <div>
+        <h2>Generate 16-character codes</h2>
+        <form method="post">
+            <label>Discount %</label>
+            <input name="percentOff" type="number" min="1" max="100" step="0.5" value="15" required />
+
+            <label>How many codes</label>
+            <input name="count" type="number" min="1" max="100" value="5" required />
+
+            <label>Optional prefix (letters/digits)</label>
+            <input name="prefix" maxlength="10" placeholder="e.g. SPRING" />
+
+            <label>Valid until (UTC, optional)</label>
+            <input name="expiresUtc" type="date" />
+
+            <label>Minimum subtotal (optional)</label>
+            <input name="minSubtotal" type="number" step="0.01" min="0" placeholder="50.00" />
+
+            <button type="submit" class="button primary">Generate</button>
+        </form>
+
+        @if (Model.JustGenerated.Count > 0)
+        {
+            <div class="label-result">
+                <h3>New codes - copy them now</h3>
+                <ul class="code-list">
+                    @foreach (var coupon in Model.JustGenerated)
+                    {
+                        <li><code>@coupon.Code</code> - @coupon.PercentOff% off</li>
+                    }
+                </ul>
+            </div>
+        }
+    </div>
+
+    <div>
+        <h2>Recent coupons</h2>
+        <table class="admin-table">
+            <thead><tr><th>Code</th><th>% off</th><th>Used</th><th>Limit</th><th>Expires</th><th>Active</th></tr></thead>
+            <tbody>
+            @foreach (var coupon in Model.Coupons)
+            {
+                <tr>
+                    <td><code>@coupon.Code</code></td>
+                    <td>@coupon.PercentOff</td>
+                    <td>@coupon.TimesUsed</td>
+                    <td>@(coupon.MaxRedemptions?.ToString() ?? "-")</td>
+                    <td>@(coupon.ExpiresUtc?.ToString("d") ?? "-")</td>
+                    <td>@(coupon.IsActive ? "yes" : "no")</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

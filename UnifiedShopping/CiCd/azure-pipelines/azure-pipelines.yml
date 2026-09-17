@@ -1,0 +1,121 @@
+# Azure DevOps pipeline for the UnifiedShopping API + web front ends.
+# Mirror of the GitHub Actions workflows for teams on Azure DevOps.
+#
+# Required variable group "shop-secrets" (Library > Variable groups):
+#   SQL_CONNECTION_STRING, AZURE_SERVICE_CONNECTION_NAME
+# The service connection needs Contributor on the resource group.
+
+trigger:
+  branches:
+    include: [main]
+  paths:
+    include: [UnifiedShopping/*]
+
+pr:
+  branches:
+    include: [main]
+
+variables:
+  dotnetVersion: "8.0.x"
+  webAppNameApi: "app-unifiedshopping-api"
+  webAppNameWeb: "app-unifiedshopping-web"
+  resourceGroup: "rg-shop"
+
+stages:
+  - stage: Build
+    jobs:
+      - job: BuildAndTest
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - task: UseDotNet@2
+            inputs:
+              version: $(dotnetVersion)
+
+          - script: dotnet restore UnifiedShopping/UnifiedShopping.sln
+            displayName: Restore
+
+          - script: dotnet build UnifiedShopping/UnifiedShopping.sln -c Release --no-restore
+            displayName: Build
+
+          - script: >
+              dotnet test UnifiedShopping/tests/ShopCommon.Tests/ShopCommon.Tests.csproj
+              -c Release --no-build --logger trx
+            displayName: Test
+
+          - task: PublishTestResults@2
+            condition: succeededOrFailed()
+            inputs:
+              testResultsFormat: VSTest
+              testResultsFiles: "**/*.trx"
+
+          - script: dotnet publish UnifiedShopping/src/ShopApi/ShopApi.csproj -c Release -o $(Build.ArtifactStagingDirectory)/api
+            displayName: Publish API
+
+          - script: dotnet publish UnifiedShopping/src/ShopWeb/ShopWeb.csproj -c Release -o $(Build.ArtifactStagingDirectory)/web
+            displayName: Publish Web
+
+          - script: |
+              dotnet tool install --global dotnet-ef --version 8.0.11
+              dotnet ef migrations bundle \
+                --project UnifiedShopping/src/ShopData/ShopData.csproj \
+                --startup-project UnifiedShopping/src/ShopApi/ShopApi.csproj \
+                -o $(Build.ArtifactStagingDirectory)/efbundle
+            displayName: EF migration bundle
+
+          - publish: $(Build.ArtifactStagingDirectory)
+            artifact: drop
+
+  - stage: DeployStaging
+    dependsOn: Build
+    jobs:
+      - deployment: DeployApi
+        environment: shop-staging
+        pool:
+          vmImage: ubuntu-latest
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: AzureWebApp@1
+                  displayName: Deploy API to staging slot
+                  inputs:
+                    azureSubscription: $(AZURE_SERVICE_CONNECTION_NAME)
+                    appName: $(webAppNameApi)
+                    deployToSlotOrAse: true
+                    resourceGroupName: $(resourceGroup)
+                    slotName: staging
+                    package: $(Pipeline.Workspace)/drop/api
+
+                - script: |
+                    chmod +x $(Pipeline.Workspace)/drop/efbundle
+                    $(Pipeline.Workspace)/drop/efbundle --connection "$(SQL_CONNECTION_STRING)"
+                  displayName: Run DB migrations
+
+                - script: |
+                    STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://$(webAppNameApi)-staging.azurewebsites.net/health)
+                    if [ "$STATUS" != "200" ]; then echo "Smoke test failed: $STATUS"; exit 1; fi
+                  displayName: Smoke test
+
+  - stage: SwapToProduction
+    dependsOn: DeployStaging
+    jobs:
+      - deployment: Swap
+        environment: shop-production
+        pool:
+          vmImage: ubuntu-latest
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: AzureCLI@2
+                  displayName: Swap staging -> production
+                  inputs:
+                    azureSubscription: $(AZURE_SERVICE_CONNECTION_NAME)
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      az webapp deployment slot swap \
+                        --name $(webAppNameApi) \
+                        --resource-group $(resourceGroup) \
+                        --slot staging --target-slot production

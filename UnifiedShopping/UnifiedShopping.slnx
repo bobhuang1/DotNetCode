@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ShopApi/ShopApi.csproj" />
+    <Project Path="src/ShopCommon/ShopCommon.csproj" />
+    <Project Path="src/ShopData/ShopData.csproj" />
+    <Project Path="src/ShopMobile/ShopMobile.csproj" />
+    <Project Path="src/ShopServices/ShopServices.csproj" />
+    <Project Path="src/ShopWeb/ShopWeb.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ShopCommon.Tests/ShopCommon.Tests.csproj" />
+  </Folder>
+</Solution>

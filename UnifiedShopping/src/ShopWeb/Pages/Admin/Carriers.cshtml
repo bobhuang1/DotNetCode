@@ -1,0 +1,60 @@
+@page
+@model ShopWeb.Pages.Admin.CarriersModel
+@{
+    ViewData["Title"] = "Carriers";
+    Layout = "_AdminLayout";
+}
+
+<h1>Carriers</h1>
+
+<p class="muted">
+    Built-in carriers (UPS, FedEx, USPS) ship with the sample mock client - plug real API
+    credentials in production. Any number of custom carriers can be added; they just need
+    a base URL implementing the quote/label/track contract.
+</p>
+
+<table class="admin-table">
+    <thead><tr><th>Carrier</th><th>Display name</th><th>Active</th><th>API base URL</th><th>Tracking URL template</th><th>Fallback base</th><th>Fallback /kg</th></tr></thead>
+    <tbody>
+    @foreach (var carrier in Model.Carriers)
+    {
+        <tr>
+            <td>@carrier.Code</td>
+            <td>@carrier.DisplayName</td>
+            <td>@(carrier.IsActive ? "yes" : "no")</td>
+            <td>@(carrier.ApiBaseUrl ?? "-")</td>
+            <td>@(carrier.TrackingUrlTemplate ?? "-")</td>
+            <td>@PricingCalculator.FormatMoney(carrier.FallbackBaseRate)</td>
+            <td>@PricingCalculator.FormatMoney(carrier.FallbackPerKgRate)</td>
+        </tr>
+    }
+    </tbody>
+</table>
+
+<h2>Add / update a carrier</h2>
+<form method="post" class="admin-form">
+    <label>Code (Ups, FedEx, Usps, Custom)</label>
+    <select name="code">
+        <option value="Ups">UPS</option>
+        <option value="FedEx">FedEx</option>
+        <option value="Usps">USPS</option>
+        <option value="Custom">Custom</option>
+    </select>
+
+    <label>Display name</label>
+    <input name="displayName" required placeholder="DHL Express" />
+
+    <label>API base URL (custom carriers)</label>
+    <input name="apiBaseUrl" placeholder="https://api.example-carrier.com" />
+
+    <label>Tracking URL template ({0} = tracking number)</label>
+    <input name="trackingUrlTemplate" placeholder="https://example.com/track/{0}" />
+
+    <label>Fallback base rate</label>
+    <input name="fallbackBaseRate" type="number" step="0.01" value="7.00" />
+
+    <label>Fallback per-kg rate</label>
+    <input name="fallbackPerKgRate" type="number" step="0.01" value="3.00" />
+
+    <button type="submit" class="button primary">Save carrier</button>
+</form>
