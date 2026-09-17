@@ -1,0 +1,16 @@
+# Copy this file to backend.tf to store state in an Azure Storage account
+# (the recommended setup for any shared/large scale deployment), then
+# `terraform init` will migrate. Without it Terraform uses the local
+# terraform.tfstate file, which is fine only for learning on one machine.
+#
+# The storage account below must already exist.
+
+# terraform {
+#   backend "azurerm" {
+#     resource_group_name  = "rg-terraform-state"
+#     storage_account_name = "tfstate${var...}"  # fixed name, e.g. "tfstate2026mcs"
+#     container_name       = "tfstate"
+#     key                  = "terraform-azure-site.tfstate"
+#     use_azuread_auth     = true
+#   }
+# }

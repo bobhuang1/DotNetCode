@@ -1,0 +1,21 @@
+## .NET build output
+bin/
+obj/
+
+## Vite / React
+ClientApp/node_modules/
+ClientApp/dist/
+
+## wwwroot is generated (Copied from ClientApp/dist on Build/Publish)
+ReactSpa.Api/wwwroot/
+
+## IDE
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+## OS
+Thumbs.db
+.DS_Store

@@ -1,0 +1,12 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+
+    "MCP_VAULT_URL": "https://<your-vault-name>.vault.azure.net/",
+    "MCP_DOWNSTREAM_API_BASE_URL": "https://api.example.com/v1",
+    "MCP_USERNAME_SECRET_NAME": "mcp-sample-user",
+    "MCP_APISECRET_SECRET_NAME": "mcp-sample-api-key"
+  }
+}

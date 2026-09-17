@@ -1,0 +1,15 @@
+{
+  "version": "2.0",
+  "logging": {
+    "logLevel": {
+      "default": "Information"
+    }
+  },
+  "extensions": {
+    "mcp": {
+      "system": {
+        "webhookAuthorizationLevel": "Anonymous"
+      }
+    }
+  }
+}

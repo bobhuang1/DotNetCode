@@ -23,6 +23,10 @@ samples for both.
 | [ShopifyIntegration](ShopifyIntegration) | Generic CRUD (customers, orders, draft orders, products) against the Shopify Admin REST API: an Azure Function relay, client samples for it, and standalone class libraries for calling Shopify directly |
 | [MicrosoftCrmIntegration](MicrosoftCrmIntegration) | Generic CRUD against the Microsoft Dataverse Web API (any table - accounts, contacts, incidents, products, price lists): an Azure Function relay, client samples for it, and standalone class libraries for calling Dataverse directly |
 | [StripeWebhook](StripeWebhook) | Generic Stripe webhook receiver: signature verification (hand-rolled HMAC-SHA256, no SDK) and a no-op dispatch covering a broad catalog of common Stripe events, plus client samples that build and sign test events |
+| [Mcp](Mcp) | Model Context Protocol (MCP) tools exposed through three hosts - a .NET 10 WebApi (Streamable HTTP), a .NET 10 Azure Function (MCP extension), and a .NET Framework 4.8 stdio console host - all sharing one multi-targeted library with Azure Key Vault-backed credentials |
+| [ReactSpa](ReactSpa) | Single-repository single-page application: an ASP.NET Core 10 minimal API served with a Vite + React + TypeScript front end (dev proxy + publish-to-wwwroot MSBuild wiring) |
+| [BlazorSignalR](BlazorSignalR) | .NET 10 Blazor Web App (interactive server) with an explicit SignalR hub, a hosted telemetry broadcaster, and a realtime page that shows server-pushed updates and user broadcasts |
+| [TerraformAzureSite](TerraformAzureSite) | Terraform for a production-shaped Azure site: Front Door Premium + WAF, autoscaling Premium v3 App Service, geo-replicated Azure SQL, Redis, Key Vault, Application Insights, and private endpoints |
 
 ## Common threads
 
@@ -35,6 +39,15 @@ samples for both.
   their Azure Functions are .NET 10-only (the isolated worker model), so
   each ships separate class libraries for .NET Framework vs. .NET 6+
   callers instead.
+- **Not everything targets `net6.0`.** `Mcp` is multi-targeted for `net48`,
+  `net8.0`, and `net10.0` only, because the MCP SDK 2.x dependency chain
+  requires .NET 8 or later (its `netstandard2.0` asset is what the .NET
+  Framework 4.8 stdio host consumes).
+- **Apps and infrastructure, not just libraries.** `ReactSpa`,
+  `BlazorSignalR`, and the various `*Integration` Azure Functions run as
+  full apps; `TerraformAzureSite` is declarative infrastructure with no .NET
+  code. Each project's README shows the run/deploy path (the React sample
+  also needs Node/npm for its front end).
 - **Graceful degradation over exceptions**, where that fits the problem.
   `CleanValidation`'s parsing helpers return a sensible default (`0`,
   `string.Empty`, `DateTime.MinValue`) instead of throwing, and

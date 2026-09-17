@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>ReactSpa.Api</RootNamespace>
+    <SpaRoot>..\ClientApp\</SpaRoot>
+  </PropertyGroup>
+
+  <!-- Keep ClientApp out of the .NET compilation graph. -->
+  <ItemGroup>
+    <Content Remove="$(SpaRoot)**" />
+    <None Remove="$(SpaRoot)**" />
+    <None Include="$(SpaRoot)**" Exclude="$(SpaRoot)node_modules\**" />
+  </ItemGroup>
+
+  <!-- If the front end has already been built (ClientApp/dist exists), copy it into
+       wwwroot so `dotnet run` serves the SPA. Run `npm run build` once first. -->
+  <Target Name="CopySpaToWwwRoot" BeforeTargets="Build" Condition="Exists('$(SpaRoot)dist\index.html')">
+    <ItemGroup>
+      <SpaDistFiles Include="$(SpaRoot)dist\**" />
+    </ItemGroup>
+    <Copy SourceFiles="@(SpaDistFiles)"
+          DestinationFiles="wwwroot\%(RecursiveDir)%(Filename)%(Extension)"
+          SkipUnchangedFiles="true" />
+    <Message Importance="high" Text="Copied ClientApp/dist to wwwroot." />
+  </Target>
+
+  <!-- On publish, rebuild the front end and include it in the publish output. -->
+  <Target Name="PublishClientApp" AfterTargets="ComputeFilesToPublish" Condition="Exists('$(SpaRoot)package.json')">
+    <Exec Command="npm install" WorkingDirectory="$(SpaRoot)" />
+    <Exec Command="npm run build" WorkingDirectory="$(SpaRoot)" />
+    <ItemGroup>
+      <DistFiles Include="$(SpaRoot)dist\**" />
+      <ResolvedFileToPublish Include="@(DistFiles->'%(FullPath)')" Exclude="@(ResolvedFileToPublish)">
+        <RelativePath>wwwroot\%(RecursiveDir)%(Filename)%(Extension)</RelativePath>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      </ResolvedFileToPublish>
+    </ItemGroup>
+  </Target>
+
+</Project>
