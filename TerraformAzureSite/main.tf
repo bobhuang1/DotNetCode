@@ -23,13 +23,16 @@ locals {
 
   # Connection string the app uses; it targets the failover-group listener so
   # the app follows SQL automatically on region failover.
-  sql_connection_string = format(
-    "Server=tcp:%s.database.windows.net,1433;Database=%s;User ID=%s;Password=%s;Encrypt=True;TrustServerCertificate=False;MultipleActiveResultSets=false;",
-    azurerm_mssql_failover_group.this.name,
-    azurerm_mssql_database.this.name,
-    var.sql_admin_login,
-    random_password.sql_admin.result,
-  )
+  sql_connection_string = join(";", [
+    "Server=tcp:${azurerm_mssql_failover_group.this.name}.database.windows.net,1433",
+    "Database=${azurerm_mssql_database.this.name}",
+    "User ID=${var.sql_admin_login}",
+    "Password=${random_password.sql_admin.result}",
+    "Encrypt=True",
+    "TrustServerCertificate=False",
+    "MultipleActiveResultSets=false",
+    "",
+  ])
 }
 
 resource "azurerm_resource_group" "this" {
