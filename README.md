@@ -69,3 +69,8 @@ samples for both.
 All connection strings, credentials, tenant IDs, domain names, and similar
 values across this folder are placeholders - replace them with your own
 before running anything for real, and never commit real secrets.
+
+
+## License
+
+This project is free software, released under the **GNU General Public License v3.0**. You may redistribute and/or modify it under those terms; see [LICENSE.md](LICENSE.md) for the full text.
