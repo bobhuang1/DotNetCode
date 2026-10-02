@@ -1,0 +1,19 @@
+@page
+@model ShopWeb.Pages.Account.AdminLoginModel
+@{
+    ViewData["Title"] = "Admin sign-in";
+}
+
+<h1>Admin sign-in</h1>
+
+@if (Model.Error is not null)
+{
+    <p class="error">@Model.Error</p>
+}
+
+<form method="post">
+    <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+    <label for="passphrase">Admin passphrase</label>
+    <input id="passphrase" name="passphrase" type="password" autocomplete="current-password" required />
+    <button type="submit">Sign in</button>
+</form>

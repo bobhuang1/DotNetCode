@@ -139,7 +139,20 @@ two App Services (with staging slots), Azure SQL, Key Vault, and App Insights.
 
 ## Security note
 
-This is sample/portfolio code. The admin gate is a demo header (`X-Admin-Key`), the
-payment gateways are demo stubs, and webhook signature verification is intentionally
-omitted. Replace all of them (plus the Stripe/PayPal/SQL credentials) before running
-anything real - never commit actual secrets; use Key Vault references in production.
+This is sample/portfolio code, and the payment gateways are demo stubs.
+
+- **Admin API:** callers send `X-Admin-Key`, compared against the `Admin:ApiKey`
+  setting. With no key configured the admin API stays locked.
+- **Admin sub-site (ShopWeb):** `/Admin` pages require signing in at
+  `/Account/AdminLogin` with the `Admin:Passphrase` setting; ShopWeb forwards its
+  `Admin:ApiKey` to the API. With no passphrase configured nobody can sign in.
+- **Stripe webhook:** verifies the `Stripe-Signature` header against
+  `Payments:Stripe:WebhookSecret` and returns 503 when the secret is missing.
+- **PayPal webhook:** refused (501) until PayPal's verify-webhook-signature call is
+  implemented; `Payments:PayPal:AllowUnverifiedWebhooksInDevelopment=true` enables
+  it for local testing only.
+
+`appsettings.Development.json` carries throwaway local values (`dev-admin-key`,
+`scarf-admin`, `whsec_dev_local_only`). Set real values per environment through Key
+Vault references, never in committed files, and move admin sign-in to real identity
+(Entra ID) before running anything real.

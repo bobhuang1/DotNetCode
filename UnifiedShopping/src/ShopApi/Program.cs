@@ -204,10 +204,22 @@ admin.MapPut("/carriers", async (CarrierSetting setting, AdminService adminServi
 
 // ---------------- Payment webhooks ----------------
 
-app.MapPost("/api/webhooks/stripe", async (HttpRequest http, CheckoutService checkout, IConfiguration config, CancellationToken ct) =>
+app.MapPost("/api/webhooks/stripe", async (HttpRequest http, CheckoutService checkout, IConfiguration config, TimeProvider clock, CancellationToken ct) =>
     {
-        // Production: verify the Stripe-Signature header before trusting the body.
+        // The signature is the only proof the call came from Stripe: without it anyone
+        // could POST a "succeeded" body and mark orders paid.
+        var secret = config[StripeWebhookVerifier.SecretConfigKey];
+        if (string.IsNullOrWhiteSpace(secret))
+        {
+            return Results.Problem("Stripe webhook secret is not configured.", statusCode: StatusCodes.Status503ServiceUnavailable);
+        }
+
         var payload = await new StreamReader(http.Body).ReadToEndAsync(ct);
+        if (!StripeWebhookVerifier.IsValid(payload, http.Headers["Stripe-Signature"].ToString(), secret, clock.GetUtcNow()))
+        {
+            return Results.BadRequest();
+        }
+
         var (orderNumber, reference) = DemoWebhookParser.ParseStripe(payload, config);
         if (orderNumber is null)
         {
@@ -217,10 +229,18 @@ app.MapPost("/api/webhooks/stripe", async (HttpRequest http, CheckoutService che
         await checkout.MarkPaidAsync(orderNumber, reference, PaymentProvider.Stripe, ct);
         return Results.Ok();
     })
-    .WithSummary("Stripe webhook: signature-verified in production; flips order to Paid.");
+    .WithSummary("Stripe webhook: verifies Stripe-Signature, then flips the order to Paid.");
 
-app.MapPost("/api/webhooks/paypal", async (HttpRequest http, CheckoutService checkout, CancellationToken ct) =>
+app.MapPost("/api/webhooks/paypal", async (HttpRequest http, CheckoutService checkout, IConfiguration config, IWebHostEnvironment env, CancellationToken ct) =>
     {
+        // PayPal webhooks must be verified with PayPal's verify-webhook-signature API before
+        // they are trusted. That call is not implemented in this sample, so the endpoint
+        // refuses every event unless unverified events are explicitly allowed in Development.
+        if (!(env.IsDevelopment() && config.GetValue<bool>("Payments:PayPal:AllowUnverifiedWebhooksInDevelopment")))
+        {
+            return Results.Problem("PayPal webhook verification is not implemented.", statusCode: StatusCodes.Status501NotImplemented);
+        }
+
         var payload = await new StreamReader(http.Body).ReadToEndAsync(ct);
         var (orderNumber, reference) = DemoWebhookParser.ParsePayPal(payload);
         if (orderNumber is null)
@@ -231,7 +251,7 @@ app.MapPost("/api/webhooks/paypal", async (HttpRequest http, CheckoutService che
         await checkout.MarkPaidAsync(orderNumber, reference, PaymentProvider.PayPal, ct);
         return Results.Ok();
     })
-    .WithSummary("PayPal webhook: flip order to Paid after gateway verification.");
+    .WithSummary("PayPal webhook: disabled until PayPal signature verification is implemented.");
 
 // ---------------- Health (for Front Door / App Service probes) ----------------
 
@@ -246,7 +266,10 @@ public sealed record CompleteReturnRequest(decimal RefundAmount, bool Restock, s
 public sealed record ClaimRequest(string ClaimReference);
 public sealed record AdjustInventoryRequest(int Delta, int? ReorderPoint = null);
 
-/// <summary>Demo-only auth: an "X-Admin-Key" header gates the admin API. Swap for real identity.</summary>
+/// <summary>
+/// Shared-key auth for the admin API: the caller sends the <c>Admin:ApiKey</c> configuration
+/// value as the X-Admin-Key header. Swap for real identity (Entra ID) in production.
+/// </summary>
 public sealed class AdminRequirement : IAuthorizationRequirement;
 
 public sealed class AdminRequirementHandler : AuthorizationHandler<AdminRequirement>
@@ -267,14 +290,22 @@ public sealed class DemoAdminAuthHandler(
 {
     protected override Task<AuthenticateResult> HandleAuthenticateAsync()
     {
-        var expected = Request.Headers["X-Admin-Key"].ToString();
-        if (string.IsNullOrEmpty(expected))
+        var provided = Request.Headers["X-Admin-Key"].ToString();
+        if (string.IsNullOrEmpty(provided))
         {
             return Task.FromResult(AuthenticateResult.NoResult());
         }
 
-        // Demo comparison only! Production: Entra ID / Identity + real secret storage.
-        if (expected == "demo-admin-key")
+        // The key comes from configuration (Key Vault reference in production). With no key
+        // configured the admin API stays locked rather than falling back to a known value.
+        var configured = Context.RequestServices.GetRequiredService<IConfiguration>()["Admin:ApiKey"];
+        if (string.IsNullOrEmpty(configured))
+        {
+            return Task.FromResult(AuthenticateResult.Fail("Admin:ApiKey is not configured."));
+        }
+
+        if (System.Security.Cryptography.CryptographicOperations.FixedTimeEquals(
+                Encoding.UTF8.GetBytes(provided), Encoding.UTF8.GetBytes(configured)))
         {
             var claims = new[] { new Claim(ClaimTypes.Name, "demo-admin"), new Claim(ClaimTypes.Role, "Admin") };
             var identity = new ClaimsIdentity(claims, "Demo");
@@ -290,12 +321,13 @@ public static class DemoWebhookParser
 {
     public static (string? OrderNumber, string Reference) ParseStripe(string payload, IConfiguration config)
     {
-        // Real implementation verifies HMAC per StripeWebhook sample in this repo, then
-        // reads event.data.object.metadata.orderNumber for checkout.session.completed.
+        // Called only after StripeWebhookVerifier accepted the signature. A real
+        // implementation reads event.data.object.metadata.orderNumber for
+        // checkout.session.completed.
         if (payload.Contains("\"status\": \"succeeded\"") || payload.Contains("\"status\":\"succeeded\""))
         {
             var start = payload.IndexOf("pi_", StringComparison.Ordinal);
-            return ("SO-DEMO", start >= 0 ? payload[start..(start + 24)] : "pi_unknown");
+            return ("SO-DEMO", start >= 0 ? payload[start..Math.Min(payload.Length, start + 24)] : "pi_unknown");
         }
         return (null, "");
     }

@@ -8,20 +8,27 @@ public sealed class AdminAuthOptions
 {
     public const string SectionName = "Admin";
 
-    /// <summary>Demo admin passphrase; production uses real identity (Entra ID/Identity).</summary>
-    public string Passphrase { get; set; } = "scarf-admin";
+    /// <summary>
+    /// Passphrase for the admin sub-site sign-in page. Empty (the default) means nobody can
+    /// sign in. Set it per environment (Key Vault reference in production); production should
+    /// move to real identity (Entra ID).
+    /// </summary>
+    public string Passphrase { get; set; } = string.Empty;
+
+    /// <summary>The ShopApi admin key (ShopApi's <c>Admin:ApiKey</c>) sent as X-Admin-Key.</summary>
+    public string ApiKey { get; set; } = string.Empty;
 }
 
 /// <summary>
 /// Typed client over ShopApi. The MAUI app talks to the exact same endpoints -
-/// one API, three front ends. Admin calls attach the demo X-Admin-Key header.
+/// one API, three front ends. Admin calls attach the configured X-Admin-Key header.
 /// </summary>
 public sealed class ShopApiClient(HttpClient http, Microsoft.Extensions.Options.IOptions<AdminAuthOptions> adminOptions)
 {
     private void AttachAdminKey()
     {
         http.DefaultRequestHeaders.Remove("X-Admin-Key");
-        http.DefaultRequestHeaders.Add("X-Admin-Key", adminOptions.Value.Passphrase);
+        http.DefaultRequestHeaders.Add("X-Admin-Key", adminOptions.Value.ApiKey);
     }
 
     public async Task<IReadOnlyList<ProductSummary>> GetProductsAsync(CancellationToken ct = default) =>
