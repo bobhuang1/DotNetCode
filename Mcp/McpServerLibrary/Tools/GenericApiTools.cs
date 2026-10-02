@@ -43,7 +43,7 @@ namespace McpServerLibrary.Tools
             _logger.LogInformation("GetStatus called for {ResourceType}/{ResourceId}", resourceType, resourceId);
 
             var creds = await _credentials.GetCredentialsAsync(cancellationToken).ConfigureAwait(false);
-            return await _api.GetAsync($"{resourceType}/{resourceId}", creds, cancellationToken).ConfigureAwait(false);
+            return await _api.GetAsync(ResourcePath.Build(resourceType, resourceId), creds, cancellationToken).ConfigureAwait(false);
         }
 
         [McpServerTool]
@@ -57,7 +57,7 @@ namespace McpServerLibrary.Tools
             _logger.LogInformation("SendUpdate called for {ResourceType}/{ResourceId}", resourceType, resourceId);
 
             var creds = await _credentials.GetCredentialsAsync(cancellationToken).ConfigureAwait(false);
-            return await _api.PostAsync($"{resourceType}/{resourceId}", jsonBody, creds, cancellationToken).ConfigureAwait(false);
+            return await _api.PostAsync(ResourcePath.Build(resourceType, resourceId), jsonBody, creds, cancellationToken).ConfigureAwait(false);
         }
     }
 }

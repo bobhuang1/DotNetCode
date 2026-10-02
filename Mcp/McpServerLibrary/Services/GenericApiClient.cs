@@ -54,16 +54,39 @@ namespace McpServerLibrary.Services
             return await ReadBodyAsync(response, cancellationToken).ConfigureAwait(false);
         }
 
-        private static Uri BuildUri(string resourcePath, GenericCredentials credentials)
+        /// <summary>
+        /// Resolves <paramref name="resourcePath"/> against the configured base URL. Absolute
+        /// URLs, "..", and anything else that would land outside the base URL are refused:
+        /// every request carries the Key Vault credentials, so it must only ever go to the
+        /// configured API.
+        /// </summary>
+        internal static Uri BuildUri(string resourcePath, GenericCredentials credentials)
         {
             if (string.IsNullOrWhiteSpace(credentials.BaseUrl))
             {
                 throw new InvalidOperationException("GenericCredentials.BaseUrl is not configured.");
             }
 
-            return resourcePath.StartsWith("http", StringComparison.OrdinalIgnoreCase)
-                ? new Uri(resourcePath)
-                : new Uri($"{credentials.BaseUrl.TrimEnd('/')}/{resourcePath.TrimStart('/')}");
+            if (string.IsNullOrWhiteSpace(resourcePath)
+                || resourcePath.Contains("://")
+                || resourcePath.StartsWith("/", StringComparison.Ordinal)
+                || resourcePath.StartsWith("\\", StringComparison.Ordinal)
+                || resourcePath.Contains(".."))
+            {
+                throw new ArgumentException("resourcePath must be a relative path under the API base URL.", nameof(resourcePath));
+            }
+
+            var baseUri = new Uri(credentials.BaseUrl.TrimEnd('/') + "/", UriKind.Absolute);
+            var target = new Uri(baseUri, resourcePath);
+
+            if (!string.Equals(target.Scheme, baseUri.Scheme, StringComparison.OrdinalIgnoreCase)
+                || !string.Equals(target.Authority, baseUri.Authority, StringComparison.OrdinalIgnoreCase)
+                || !target.AbsolutePath.StartsWith(baseUri.AbsolutePath, StringComparison.Ordinal))
+            {
+                throw new ArgumentException("resourcePath resolves outside the API base URL.", nameof(resourcePath));
+            }
+
+            return target;
         }
 
         private static void ApplyBasicAuth(HttpRequestMessage request, GenericCredentials credentials)

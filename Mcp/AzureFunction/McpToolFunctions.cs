@@ -38,7 +38,7 @@ public sealed class McpToolFunctions
         _logger.LogInformation("get_status called for {ResourceType}/{ResourceId}", resourceType, resourceId);
 
         var credentials = await _credentials.GetCredentialsAsync();
-        return await _api.GetAsync($"{resourceType}/{resourceId}", credentials);
+        return await _api.GetAsync(ResourcePath.Build(resourceType, resourceId), credentials);
     }
 
     [Function(nameof(SendUpdate))]
@@ -55,6 +55,6 @@ public sealed class McpToolFunctions
         _logger.LogInformation("send_update called for {ResourceType}/{ResourceId}", resourceType, resourceId);
 
         var credentials = await _credentials.GetCredentialsAsync();
-        return await _api.PostAsync($"{resourceType}/{resourceId}", jsonBody, credentials);
+        return await _api.PostAsync(ResourcePath.Build(resourceType, resourceId), jsonBody, credentials);
     }
 }
