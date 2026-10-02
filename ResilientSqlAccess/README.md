@@ -100,20 +100,26 @@ were 250ms, 500ms, 1s, 2s, matching the formula exactly.
 
 ### Which errors get retried
 
-Every `SqlException` is retried **except** the error numbers listed in
-`SqlRetryOptions.NonRetryableErrorNumbers` (default: `-1`, `233`, `18456`, `2` -
-connection failures and login failures, where retrying can't possibly help).
+Only error numbers listed in `SqlRetryOptions.TransientErrorNumbers` are retried:
+connection drops and transport errors (`-1`, `2`, `53`, `64`, `121`, `233`,
+`10053`, `10054`, `10060`), deadlocks (`1205`), failover and throttling
+(`4060`, `10928`, `10929`, `40143`, `40197`, `40501`, `40540`, `40613`,
+`49918`-`49920`), and command timeouts (`-2`). Everything else - syntax and
+permission errors, constraint violations, conversion errors, bad credentials -
+fails immediately, because retrying it cannot succeed.
 
-This is deliberately an opt-out deny-list rather than an opt-in allow-list of known
-transient error codes: an error you've never seen before (a new Azure SQL
-throttling code, an unfamiliar network blip) is retried by default instead of
-silently failing fast. If you want a stricter allow-list instead, or need
-different logic entirely (e.g. only retry on read operations), set
-`SqlRetryOptions.IsTransient` - when set, it takes priority over
-`NonRetryableErrorNumbers`:
+**Writes and timeouts:** a timed-out `ExecuteNonQueryAsync` may already have
+committed on the server, so by default it is *not* retried (retrying could apply
+the INSERT/UPDATE twice). Set `SqlRetryOptions.RetryNonQueryOnTimeout = true`
+only for idempotent statements.
+
+Add environment-specific transient numbers to `TransientErrorNumbers`, or replace
+the decision entirely with `SqlRetryOptions.IsTransient` (it takes priority over
+both settings):
 
 ```csharp
-options.IsTransient = ex => ex.Number is 4060 or 40197 or 40501 or 40613 or 49918 or 1205;
+options.TransientErrorNumbers.Add(4221);
+options.IsTransient = ex => ex.Number is 1205 or 40613;   // full override
 ```
 
 ### Observing retries

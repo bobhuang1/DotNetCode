@@ -168,7 +168,10 @@ namespace ResilientSqlAccess
 
         private IAsyncPolicy CreateRetryPolicy(string operationName, string commandText)
         {
-            var isTransient = _options.IsTransient ?? (ex => !_options.NonRetryableErrorNumbers.Contains(ex.Number));
+            var isWrite = operationName == nameof(ExecuteNonQueryAsync);
+            var isTransient = _options.IsTransient ?? (ex =>
+                _options.TransientErrorNumbers.Contains(ex.Number)
+                && !(isWrite && ex.Number == -2 && !_options.RetryNonQueryOnTimeout));
 
             return Policy
                 .Handle<SqlException>(isTransient)

@@ -19,24 +19,52 @@ namespace ResilientSqlAccess
         public SqlRetryBackoffType BackoffType { get; set; } = SqlRetryBackoffType.Exponential;
 
         /// <summary>
-        /// SQL Server error numbers that should NOT be retried, because retrying them can't
-        /// possibly succeed (e.g. bad credentials). Every other <see cref="SqlException"/> is
-        /// treated as transient and retried - this is a deliberate "retry by default, opt out
-        /// specific errors" design rather than an allow-list of specific transient error codes,
-        /// so an unfamiliar transient error you haven't seen before still gets retried.
-        /// See README.md for guidance on tuning this list.
+        /// SQL Server / Azure SQL error numbers that are retried because they are known to be
+        /// transient (connection drops, failover, throttling, deadlock). Every other
+        /// <see cref="SqlException"/> - syntax errors, permission errors, constraint violations,
+        /// conversion errors, bad credentials - fails immediately, since retrying it cannot
+        /// succeed and only delays the error. Add numbers here for transient errors specific
+        /// to your environment. See README.md.
         /// </summary>
-        public ISet<int> NonRetryableErrorNumbers { get; set; } = new HashSet<int>
+        public ISet<int> TransientErrorNumbers { get; set; } = new HashSet<int>
         {
+            -2,    // Command timeout (see RetryNonQueryOnTimeout for writes)
             -1,    // Generic client-side connection failure
-            233,   // No process is on the other end of the pipe (connection reset pre-login)
-            18456, // Login failed for user
-            2      // A network-related or instance-specific error establishing the connection
+            2,     // Network-related or instance-specific error establishing the connection
+            53,    // Server not found / not accessible
+            64,    // Connection forcibly closed during login
+            121,   // Semaphore timeout (transport-level error)
+            233,   // No process on the other end of the pipe (connection reset pre-login)
+            1205,  // Deadlock victim
+            4060,  // Cannot open database (often during failover)
+            4221,  // Login to read-secondary failed due to long wait on HADR_DATABASE_WAIT_FOR_TRANSITION_TO_VERSIONING
+            10053, // Transport-level error: connection aborted
+            10054, // Transport-level error: connection reset by peer
+            10060, // Network-related timeout
+            10928, // Azure SQL resource limit reached
+            10929, // Azure SQL resource limit reached (min guarantee)
+            40143, // Azure SQL: connection could not be initialized
+            40197, // Azure SQL: service error processing the request (failover)
+            40501, // Azure SQL: service is busy
+            40540, // Azure SQL: service encountered an error
+            40613, // Azure SQL: database not currently available
+            49918, // Azure SQL: not enough resources to process the request
+            49919, // Azure SQL: too many create/update operations
+            49920  // Azure SQL: too many operations in progress
         };
 
         /// <summary>
+        /// Whether a command timeout (error -2) on <c>ExecuteNonQueryAsync</c> is retried.
+        /// Default: false. A timed-out INSERT/UPDATE/DELETE may already have committed on the
+        /// server, so retrying it can apply the change twice. Set to true only for statements
+        /// that are idempotent (or guarded by a key the database enforces).
+        /// </summary>
+        public bool RetryNonQueryOnTimeout { get; set; }
+
+        /// <summary>
         /// Optional override for deciding whether a given <see cref="SqlException"/> should be
-        /// retried. When set, this takes priority over <see cref="NonRetryableErrorNumbers"/>.
+        /// retried. When set, this takes priority over <see cref="TransientErrorNumbers"/> and
+        /// <see cref="RetryNonQueryOnTimeout"/>.
         /// </summary>
         public Func<SqlException, bool>? IsTransient { get; set; }
 
