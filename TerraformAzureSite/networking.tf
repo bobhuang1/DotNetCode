@@ -37,7 +37,7 @@ resource "azurerm_private_dns_zone" "this" {
   for_each = {
     web   = "privatelink.azurewebsites.net"
     sql   = "privatelink.database.windows.net"
-    redis = "privatelink.redis.cache.windows.net"
+    redis = "privatelink.redis.azure.net"
     kv    = "privatelink.vaultcore.azure.net"
   }
 
@@ -86,8 +86,8 @@ locals {
     redis = {
       name        = "pe-redis"
       location    = var.location
-      resource_id = azurerm_redis_cache.this.id
-      subresource = "redisCache"
+      resource_id = azurerm_managed_redis.this.id
+      subresource = "redisEnterprise"
       zone_key    = "redis"
       manual      = false
     }

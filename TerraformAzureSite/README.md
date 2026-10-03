@@ -3,7 +3,7 @@
 Infrastructure-as-code for a production-shaped web site on Azure: **Azure
 Front Door Premium + WAF** in front, a **Premium v3 App Service** that
 autoscales on CPU, **Azure SQL with a geo-replica and automatic failover**,
-a **Premium Redis cache**, **Key Vault** for secrets, **Application Insights**
+an **Azure Managed Redis** cache, **Key Vault** for secrets, **Application Insights**
 for monitoring, and **private endpoints** so SQL, Redis, and Key Vault are only
 reachable from inside the VNet. App deployment is *not* part of the Terraform
 state; the README shows how to wire it into CI/CD.
@@ -15,7 +15,7 @@ state; the README shows how to wire it into CI/CD.
 | Front Door Premium + WAF | `frontdoor.tf` | OWASP managed rules, bot rule set, geo custom rule, HTTPS-only route; origin reaches the app through its **private endpoint** |
 | App Service (Premium v3, Linux) | `appservice.tf` | `dotnet` 10 stack, system-assigned identity, staging slot, VNet integration, CPU autoscale (1–5 workers) |
 | Azure SQL geo-replica | `sql.tf` | Business Critical DB, secondary server in `location_secondary`, auto-failover group; the app connects to the **failover listener** |
-| Redis (Premium) | `redis.tf` | Private-endpoint only, TLS |
+| Azure Managed Redis | `redis.tf` | `Balanced_B1` by default, private-endpoint only, TLS. (Azure Cache for Redis no longer accepts new caches.) |
 | Key Vault | `keyvault.tf` | Private-endpoint only, RBAC; app identity granted `Key Vault Secrets User` |
 | Monitoring | `monitoring.tf` | Log Analytics + Application Insights |
 | Networking | `networking.tf` | VNet, app-integration subnet (delegated), shared private-endpoint subnet, private DNS zones, SQL listener DNS record |
@@ -31,9 +31,20 @@ terraform plan -out plan.tfplan
 terraform apply plan.tfplan
 ```
 
-The `az` principal running the apply needs `Contributor` (or a scoped role)
-on the subscription/Resource Group and the **Key Vault Administrator** data-
-plane role to create the sample secrets (`azurerm_key_vault_secret`) with RBAC.
+The `az` principal running the apply needs `Owner` (or `Contributor` plus
+`User Access Administrator`) on the subscription or resource group. Terraform
+grants that principal **Key Vault Secrets Officer** on the new vault and waits
+two minutes for the role to propagate before writing the secrets.
+
+**Regions:** some subscriptions (new and free-trial ones especially) may not
+create Azure SQL servers in busy regions, and the apply fails with
+"Provisioning is restricted in this region". Check a region first with
+
+```bash
+az rest --method get --url "https://management.azure.com/subscriptions/<subscription-id>/providers/Microsoft.Sql/locations/<region>/capabilities?api-version=2021-11-01" --query "{status:status,reason:reason}"
+```
+
+and set `location` / `location_secondary` to regions that report `Available`.
 
 The vault has public network access disabled, so the secret writes only work
 from a machine inside the VNet (for example a self-hosted runner). To apply
@@ -88,5 +99,6 @@ endpoint is `outputs.front_door_endpoint`.
 ## Cost
 
 This shape is expensive on purpose — Premium v3 workers, Business Critical SQL,
-Premium Redis and Front Door Premium all bill continuously. For a node/mock
+Managed Redis and Front Door Premium all bill continuously (roughly
+US$3,000 a month with the sample values). For a node/mock
 environment scale everything downward first (`terraform.tfvars`).

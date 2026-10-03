@@ -34,6 +34,13 @@ locals {
     "",
   ])
 
+  redis_connection_string = join(",", [
+    "${azurerm_managed_redis.this.hostname}:${azurerm_managed_redis.this.default_database[0].port}",
+    "password=${azurerm_managed_redis.this.default_database[0].primary_access_key}",
+    "ssl=True",
+    "abortConnect=False",
+  ])
+
   # App settings point at the Key Vault secrets instead of holding the values.
   sql_connection_string_reference   = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.sql_connection_string.versionless_id})"
   redis_connection_string_reference = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.redis_connection_string.versionless_id})"

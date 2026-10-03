@@ -47,23 +47,38 @@ resource "azurerm_role_assignment" "staging_secrets_user" {
   principal_id         = azurerm_linux_web_app_slot.staging.identity[0].principal_id
 }
 
-# Sample secrets created from values Terraform already manages. Your az CLI
-# principal needs a Key Vault data-plane role (e.g. "Key Vault Administrator")
-# for the apply step; see the README.
+# The identity running `terraform apply` writes the secrets below, so it needs a
+# data-plane role on this vault (RBAC mode). Role assignments take a minute or
+# two to reach Key Vault, hence the wait before the first secret is written.
+resource "azurerm_role_assignment" "deployer_secrets_officer" {
+  scope                = azurerm_key_vault.this.id
+  role_definition_name = "Key Vault Secrets Officer"
+  principal_id         = data.azurerm_client_config.current.object_id
+}
+
+resource "time_sleep" "deployer_role_propagation" {
+  depends_on      = [azurerm_role_assignment.deployer_secrets_officer]
+  create_duration = "120s"
+}
+
+# Sample secrets created from values Terraform already manages.
 resource "azurerm_key_vault_secret" "sql_admin_password" {
   name         = "sql-admin-password"
   value        = random_password.sql_admin.result
   key_vault_id = azurerm_key_vault.this.id
+  depends_on   = [time_sleep.deployer_role_propagation]
 }
 
 resource "azurerm_key_vault_secret" "sql_connection_string" {
   name         = "sql-connection-string"
   value        = local.sql_connection_string
   key_vault_id = azurerm_key_vault.this.id
+  depends_on   = [time_sleep.deployer_role_propagation]
 }
 
 resource "azurerm_key_vault_secret" "redis_connection_string" {
   name         = "redis-connection-string"
-  value        = azurerm_redis_cache.this.primary_connection_string
+  value        = local.redis_connection_string
   key_vault_id = azurerm_key_vault.this.id
+  depends_on   = [time_sleep.deployer_role_propagation]
 }

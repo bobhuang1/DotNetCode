@@ -9,7 +9,8 @@ resource "azurerm_cdn_frontdoor_profile" "this" {
 }
 
 resource "azurerm_cdn_frontdoor_firewall_policy" "this" {
-  name                = "fdfw-${local.unique}"
+  # WAF policy names allow letters and digits only (no hyphens).
+  name                = "fdfw${replace(local.unique, "-", "")}"
   resource_group_name = azurerm_resource_group.this.name
   sku_name            = "Premium_AzureFrontDoor"
   mode                = "Prevention"

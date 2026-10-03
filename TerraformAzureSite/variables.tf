@@ -79,19 +79,9 @@ variable "sql_failover_grace_minutes" {
 
 ## Redis
 variable "redis_sku" {
-  type    = string
-  default = "Premium"
-}
-
-variable "redis_family" {
-  type    = string
-  default = "P"
-}
-
-variable "redis_capacity" {
-  type        = number
-  default     = 1
-  description = "Premium capacity 1 = P1."
+  type        = string
+  default     = "Balanced_B1"
+  description = "Azure Managed Redis SKU, e.g. Balanced_B1 (smallest with HA) or Balanced_B3+ for geo-replication."
 }
 
 variable "key_vault_allowed_ip_ranges" {
