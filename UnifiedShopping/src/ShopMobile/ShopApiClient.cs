@@ -39,8 +39,12 @@ public sealed class ShopApiClient
         return result ?? new CheckoutResult(false, "Checkout failed.", null, OrderStatus.PendingPayment, null, null);
     }
 
-    public async Task<Order?> GetOrderAsync(string orderNumber, CancellationToken ct = default) =>
-        await _http.GetFromJsonAsync<Order?>($"api/orders/{Uri.EscapeDataString(orderNumber)}", ct);
+    public async Task<Order?> GetOrderAsync(string orderNumber, string email, CancellationToken ct = default)
+    {
+        using var response = await _http.GetAsync(
+            $"api/orders/{Uri.EscapeDataString(orderNumber)}?email={Uri.EscapeDataString(email)}", ct);
+        return response.IsSuccessStatusCode ? await response.Content.ReadFromJsonAsync<Order>(ct) : null;
+    }
 }
 
 /// <summary>Endpoint configuration; swap via environment or a settings screen in real apps.</summary>

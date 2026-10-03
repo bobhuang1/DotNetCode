@@ -76,3 +76,16 @@ public sealed class CouponCodeGeneratorTests
         Assert.Equal(new string(Enumerable.Repeat(CouponCodeGenerator.Alphabet[2], 16).ToArray()), code);
     }
 }
+
+public sealed class OrderNumberGeneratorTests
+{
+    [Fact]
+    public void Create_uses_year_and_ten_random_chars_within_column_limit()
+    {
+        var number = OrderNumberGenerator.Create(new DateTime(2026, 3, 1, 0, 0, 0, DateTimeKind.Utc));
+
+        Assert.StartsWith("SO-2026-", number);
+        Assert.Equal(18, number.Length); // Orders.OrderNumber is MaxLength(20)
+        Assert.All(number[8..], c => Assert.Contains(c, CouponCodeGenerator.Alphabet));
+    }
+}

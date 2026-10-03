@@ -41,7 +41,8 @@ public sealed record CheckoutRequest(
     Address ShipTo,
     PaymentProvider Provider,
     string? ReturnUrl = null,
-    string? CancelUrl = null);
+    string? CancelUrl = null,
+    string? CustomerEmail = null);
 
 public sealed record CheckoutResult(
     bool Succeeded,

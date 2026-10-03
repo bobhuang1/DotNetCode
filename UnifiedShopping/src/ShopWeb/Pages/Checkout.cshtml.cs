@@ -17,7 +17,7 @@ public sealed class CheckoutModel(ShopApiClient api, CartSession cartSession) : 
     }
 
     public async Task<IActionResult> OnPostAsync(
-        Address shipTo, CarrierCode carrier, PaymentProvider provider, CancellationToken ct)
+        Address shipTo, string email, CarrierCode carrier, PaymentProvider provider, CancellationToken ct)
     {
         var cart = await api.QuoteCartAsync(cartSession.Current, ct);
         if (cart.Items.Count == 0)
@@ -33,7 +33,7 @@ public sealed class CheckoutModel(ShopApiClient api, CartSession cartSession) : 
             cart.Totals.GrandTotal = cart.Totals.Subtotal - cart.Totals.Discount + selected.Cost + cart.Totals.Tax;
         }
 
-        var result = await api.CheckoutAsync(new CheckoutRequest(cart, shipTo, provider), fromMobile: false, ct);
+        var result = await api.CheckoutAsync(new CheckoutRequest(cart, shipTo, provider, CustomerEmail: email), fromMobile: false, ct);
         if (!result.Succeeded)
         {
             ErrorMessage = result.Error ?? "Checkout failed. Please try again.";
@@ -47,7 +47,7 @@ public sealed class CheckoutModel(ShopApiClient api, CartSession cartSession) : 
             return Redirect(redirectUrl);
         }
 
-        PlacedOrder = await api.GetOrderAsync(result.OrderNumber!, ct);
+        PlacedOrder = await api.GetOrderAsync(result.OrderNumber!, email, ct);
         await cartSession.ClearAsync();
         return Page();
     }

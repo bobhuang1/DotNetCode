@@ -93,16 +93,26 @@ app.MapPost("/api/checkout/mobile", async (CheckoutRequest request, CheckoutServ
     })
     .WithSummary("Same checkout from the MAUI app (tags the order channel).");
 
-app.MapGet("/api/orders/{orderNumber}", async (string orderNumber, ShopDbContext db, CancellationToken ct) =>
+app.MapGet("/api/orders/{orderNumber}", async (string orderNumber, string? email, ShopDbContext db, CancellationToken ct) =>
     {
+        // Anonymous lookup needs the order number AND the email it was placed with;
+        // the number alone is not a secret. Both mismatches return the same 404 so the
+        // endpoint does not confirm which order numbers exist.
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return Results.NotFound();
+        }
+
         var order = await db.Orders.AsNoTracking()
             .Include(o => o.Lines)
             .Include(o => o.Shipments)
             .Include(o => o.Return)
             .FirstOrDefaultAsync(o => o.OrderNumber == orderNumber, ct);
-        return order is null ? Results.NotFound() : Results.Ok(order);
+        return order is null || !string.Equals(order.CustomerEmail.Trim(), email.Trim(), StringComparison.OrdinalIgnoreCase)
+            ? Results.NotFound()
+            : Results.Ok(order);
     })
-    .WithSummary("Customer order lookup: lines, shipments/tracking, return status.");
+    .WithSummary("Customer order lookup (order number + order email): lines, shipments/tracking, return status.");
 
 app.MapGet("/api/carriers/quote", async (string postalCode, string country, decimal subtotal, ShippingService shipping, CancellationToken ct) =>
     {

@@ -52,8 +52,12 @@ public sealed class ShopApiClient(HttpClient http, Microsoft.Extensions.Options.
         return result ?? new CheckoutResult(false, "Checkout failed.", null, OrderStatus.PendingPayment, null, null);
     }
 
-    public async Task<Order?> GetOrderAsync(string orderNumber, CancellationToken ct = default) =>
-        await http.GetFromJsonAsync<Order?>($"api/orders/{Uri.EscapeDataString(orderNumber)}", ct);
+    public async Task<Order?> GetOrderAsync(string orderNumber, string email, CancellationToken ct = default)
+    {
+        using var response = await http.GetAsync(
+            $"api/orders/{Uri.EscapeDataString(orderNumber)}?email={Uri.EscapeDataString(email)}", ct);
+        return response.IsSuccessStatusCode ? await response.Content.ReadFromJsonAsync<Order>(ct) : null;
+    }
 
     public async Task<IReadOnlyList<ShippingRate>> QuoteShippingAsync(string postalCode, string country, decimal subtotal, CancellationToken ct = default)
     {

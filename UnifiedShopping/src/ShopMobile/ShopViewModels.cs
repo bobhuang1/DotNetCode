@@ -186,7 +186,8 @@ public sealed class CartViewModel
                 PostalCode = "10001",
                 Country = "US",
             },
-            PaymentProvider.Stripe));
+            PaymentProvider.Stripe,
+            CustomerEmail: "buyer@example.com"));
 
 #if MAUI
         await Application.Current!.MainPage!.DisplayAlertAsync(

@@ -18,6 +18,12 @@ public class CheckoutService(ShopDbContext db, IEnumerable<IPaymentGateway> gate
             return new CheckoutResult(false, "Cart is empty.", null, OrderStatus.PendingPayment, null, null);
         }
 
+        var customerEmail = request.CustomerEmail?.Trim();
+        if (string.IsNullOrEmpty(customerEmail) || customerEmail.Length > 320 || !customerEmail.Contains('@'))
+        {
+            return new CheckoutResult(false, "A valid email address is required.", null, OrderStatus.PendingPayment, null, null);
+        }
+
         var (items, validationError) = await new CartService(db).ValidateAsync(cart, ct);
         if (items.Count == 0)
         {
@@ -55,20 +61,32 @@ public class CheckoutService(ShopDbContext db, IEnumerable<IPaymentGateway> gate
             decimal? percentOff = null;
             string? couponMessage = null;
 
-            if (!string.IsNullOrWhiteSpace(cart.CouponCode))
+            var couponCode = string.IsNullOrWhiteSpace(cart.CouponCode) ? null : cart.CouponCode.Trim().ToUpperInvariant();
+            if (couponCode is not null)
             {
-                (percentOff, couponMessage) = await new CartService(db).ValidateCouponAsync(cart.CouponCode, subtotal, ct);
+                (percentOff, couponMessage) = await new CartService(db).ValidateCouponAsync(couponCode, subtotal, ct);
                 if (couponMessage is not null)
                 {
                     return new CheckoutResult(false, couponMessage, null, OrderStatus.PendingPayment, null, null);
                 }
+
+                // Reserve one redemption atomically: two checkouts racing for the last use of a
+                // limited coupon both pass the read-only validation above, but only one of them
+                // can win this conditional update. The reservation rolls back with the transaction.
+                var reserved = await db.Coupons
+                    .Where(c => c.Code == couponCode && (c.MaxRedemptions == null || c.TimesUsed < c.MaxRedemptions))
+                    .ExecuteUpdateAsync(setters => setters.SetProperty(c => c.TimesUsed, c => c.TimesUsed + 1), ct);
+                if (reserved == 0)
+                {
+                    return new CheckoutResult(false, "Coupon code has reached its usage limit.", null, OrderStatus.PendingPayment, null, null);
+                }
             }
 
-            var totals = PricingCalculator.Calculate(items, cart.CouponCode, percentOff, couponMessage, 0, selectedRate: null);
+            var totals = PricingCalculator.Calculate(items, couponCode, percentOff, couponMessage, 0, selectedRate: null);
             var order = new Order
             {
-                OrderNumber = $"SO-{DateTime.UtcNow:yyyy}-{Random.Shared.Next(100000, 999999)}",
-                CustomerEmail = request.ShipTo.Name is null ? "guest@example.com" : request.ShipTo.Name,
+                OrderNumber = OrderNumberGenerator.Create(clock.GetUtcNow().UtcDateTime),
+                CustomerEmail = customerEmail,
                 Status = OrderStatus.PendingPayment,
                 Channel = channel,
                 ShipTo = request.ShipTo,
@@ -137,7 +155,6 @@ public class CheckoutService(ShopDbContext db, IEnumerable<IPaymentGateway> gate
             if (redirectUrl is null)
             {
                 order.Status = OrderStatus.Paid;
-                await MarkCouponRedeemedAsync(order.CouponCode, ct);
             }
 
             await db.SaveChangesAsync(ct);
@@ -181,21 +198,8 @@ public class CheckoutService(ShopDbContext db, IEnumerable<IPaymentGateway> gate
             Message = $"Payment confirmed ({PricingCalculator.FormatMoney(order.GrandTotal)}).",
         });
 
-        await MarkCouponRedeemedAsync(order.CouponCode, ct);
         await db.SaveChangesAsync(ct);
 
         return new CheckoutResult(true, null, order.OrderNumber, order.Status, null, providerReference);
-    }
-
-    private async Task MarkCouponRedeemedAsync(string? couponCode, CancellationToken ct)
-    {
-        if (string.IsNullOrWhiteSpace(couponCode))
-        {
-            return;
-        }
-
-        await db.Coupons
-            .Where(c => c.Code == couponCode)
-            .ExecuteUpdateAsync(setters => setters.SetProperty(c => c.TimesUsed, c => c.TimesUsed + 1), ct);
     }
 }

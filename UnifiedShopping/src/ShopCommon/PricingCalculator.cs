@@ -33,7 +33,7 @@ public static class PricingCalculator
         if (!string.IsNullOrWhiteSpace(couponCode) && couponPercentOff is > 0 && couponError is null)
         {
             discount = Math.Round(subtotal * couponPercentOff.Value / 100m, 2, MidpointRounding.AwayFromZero);
-            appliedCode = couponCode.ToUpperInvariant();
+            appliedCode = couponCode.Trim().ToUpperInvariant();
             percentOff = couponPercentOff;
         }
 

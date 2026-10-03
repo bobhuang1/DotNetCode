@@ -5,7 +5,8 @@
              Title="Order Status">
     <VerticalStackLayout Padding="16" Spacing="12" BackgroundColor="{StaticResource PaperColor}">
         <Label Text="Look up an order" FontSize="20" FontAttributes="Bold" />
-        <Entry x:Name="OrderNumberEntry" Placeholder="SO-2026-123456" />
+        <Entry x:Name="OrderNumberEntry" Placeholder="SO-2026-7KQ2M9XA" />
+        <Entry x:Name="EmailEntry" Placeholder="Email used for the order" Keyboard="Email" />
         <Button Text="Look up" Clicked="OnLookUpClicked" />
 
         <Label x:Name="ResultLabel" Text="" LineBreakMode="WordWrap" />

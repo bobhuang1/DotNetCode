@@ -15,14 +15,16 @@ public partial class OrderStatusPage : ContentPage
     private async void OnLookUpClicked(object? sender, EventArgs e)
     {
         var orderNumber = OrderNumberEntry.Text?.Trim();
-        if (string.IsNullOrEmpty(orderNumber))
+        var email = EmailEntry.Text?.Trim();
+        if (string.IsNullOrEmpty(orderNumber) || string.IsNullOrEmpty(email))
         {
+            ResultLabel.Text = "Enter the order number and the email used for the order.";
             return;
         }
 
         try
         {
-            var order = await _api.GetOrderAsync(orderNumber);
+            var order = await _api.GetOrderAsync(orderNumber, email);
             if (order is null)
             {
                 ResultLabel.Text = "Order not found.";

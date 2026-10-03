@@ -7,9 +7,15 @@
 <h1>Order status</h1>
 
 <form method="get" class="inline">
-    <input name="orderNumber" placeholder="Order number, e.g. SO-2026-123456" value="@Model.OrderNumber" />
+    <input name="orderNumber" placeholder="Order number, e.g. SO-2026-7KQ2M9XA" value="@Model.OrderNumber" required />
+    <input name="email" type="email" placeholder="Email used for the order" value="@Model.Email" required />
     <button type="submit" class="button">Look up</button>
 </form>
+
+@if (Model.NotFound)
+{
+    <p>No order matches that order number and email.</p>
+}
 
 @if (Model.Order is { } order)
 {
