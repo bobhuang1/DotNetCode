@@ -49,6 +49,18 @@ You can also pass a full Microsoft Graph `Message` object (`Microsoft.Graph.Mode
 to `SendAsync` when you need complete control over the payload (importance,
 categories, custom headers, etc.), instead of the flattened `SimpleEmailMessage`.
 
+### Local testing: redirect all mail
+
+Set `DebugRedirectAddress` while the app runs locally (for example when your
+`IsLocalDebug` setting is true). Every message then goes only to that address:
+Cc and Bcc are dropped, and the original recipients are listed in the subject
+and at the top of the body.
+
+```csharp
+if (isLocalDebug)
+    emailSender.DebugRedirectAddress = "test-mailbox@yourcompany.com";
+```
+
 ## Authentication & permissions
 
 `GraphEmailSender` accepts any `Azure.Core.TokenCredential`, so how you

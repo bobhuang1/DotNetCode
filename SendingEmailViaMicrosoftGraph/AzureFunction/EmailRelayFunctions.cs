@@ -12,6 +12,7 @@ using Microsoft.Graph.Users.Item.SendMail;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
 using SendingEmailViaMicrosoftGraph.AzureFunction.Models;
+using SendingEmailViaMicrosoftGraph.EmailSender;
 using System.Diagnostics;
 using System.Net;
 using System.Text;
@@ -54,6 +55,7 @@ namespace SendingEmailViaMicrosoftGraph.AzureFunction
         private readonly string _testRecipientEmailAddress;
         private readonly string _senderMailboxAddress;
         private readonly bool _debuggerAttached;
+        private readonly string? _debugRedirectAddress;
 
         private static readonly HashSet<string> AllowedMimeTypes =
         [
@@ -85,6 +87,16 @@ namespace SendingEmailViaMicrosoftGraph.AzureFunction
                 ?? "sender@example.com";
 
             _debuggerAttached = Debugger.IsAttached;
+
+            // IsLocalDebug = true (local.settings.json) redirects every message to
+            // DebugRedirectAddress, so running the function locally never mails real people.
+            if (bool.TryParse(configuration["IsLocalDebug"], out var isLocalDebug) && isLocalDebug)
+            {
+                _debugRedirectAddress = configuration["DebugRedirectAddress"]?.Trim();
+                if (string.IsNullOrEmpty(_debugRedirectAddress))
+                    throw new InvalidOperationException("IsLocalDebug is true but DebugRedirectAddress is not set.");
+                Console.WriteLine($"IsLocalDebug: all email is redirected to {_debugRedirectAddress}.");
+            }
 
             if (_debuggerAttached)
             {
@@ -346,6 +358,9 @@ namespace SendingEmailViaMicrosoftGraph.AzureFunction
         private async Task<(bool IsSendSuccess, string Message, string GraphCode, int? StatusCode)>
             SendEmailWithRetryAsync(Message mailMessage, CancellationToken cancellationToken)
         {
+            if (_debugRedirectAddress is not null)
+                DebugEmailRedirect.Apply(mailMessage, _debugRedirectAddress);
+
             var toRecipient = mailMessage.ToRecipients?.FirstOrDefault()?.EmailAddress?.Address
                               ?? "(unknown recipient)";
 

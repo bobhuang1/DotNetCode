@@ -63,6 +63,18 @@ builder.Services.AddSingleton(sp =>
 });
 ```
 
+### Local testing: redirect all mail
+
+Set `DebugRedirectAddress` while the app runs locally (for example when your
+`IsLocalDebug` setting is true). Every message then goes only to that address:
+Cc and Bcc are dropped, and the original recipients are listed in the subject
+and at the top of the body.
+
+```csharp
+if (isLocalDebug)
+    emailSender.DebugRedirectAddress = "test-mailbox@yourcompany.com";
+```
+
 ## Authentication & permissions
 
 `GraphEmailSender` accepts any `Azure.Core.TokenCredential`, so how you

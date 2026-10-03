@@ -130,6 +130,8 @@ real values into it.
 
 | Setting | Purpose |
 |---|---|
+| `IsLocalDebug` | `true` for local runs: every message goes only to `DebugRedirectAddress` (Cc/Bcc dropped, original recipients shown in the subject and body). Leave unset in Azure |
+| `DebugRedirectAddress` | Test mailbox that receives all mail while `IsLocalDebug` is `true` |
 | `TestRecipientEmailAddress` | Recipient used only by the built-in "empty body" test path (currently disabled via `IsTestModeEnabled = false` in code) |
 | `SenderMailboxAddress` | Mailbox the function sends as |
 | `APPLICATIONINSIGHTS_CONNECTION_STRING` | Optional. If set, OpenTelemetry traces/metrics/logs export to Application Insights. If unset, the function still runs with telemetry disabled. |

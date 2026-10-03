@@ -68,6 +68,13 @@ namespace SendingEmailViaMicrosoftGraph.EmailSender
             _graphClient = new GraphServiceClient(credential, new[] { "https://graph.microsoft.com/.default" });
         }
 
+        /// <summary>
+        /// When set, every message is sent only to this address: Cc/Bcc are dropped and the
+        /// original recipients are shown in the subject and body (see <see cref="DebugEmailRedirect"/>).
+        /// Set it whenever the app runs locally (e.g. IsLocalDebug = true) so tests never mail real people.
+        /// </summary>
+        public string? DebugRedirectAddress { get; set; }
+
         /// <summary>Sends a flattened <see cref="SimpleEmailMessage"/> (recipients as strings, optional attachments).</summary>
         public Task<EmailSendResult> SendAsync(SimpleEmailMessage message, CancellationToken cancellationToken = default)
         {
@@ -79,6 +86,9 @@ namespace SendingEmailViaMicrosoftGraph.EmailSender
         public async Task<EmailSendResult> SendAsync(Message graphMessage, CancellationToken cancellationToken = default)
         {
             if (graphMessage == null) throw new ArgumentNullException(nameof(graphMessage));
+
+            if (!string.IsNullOrWhiteSpace(DebugRedirectAddress))
+                DebugEmailRedirect.Apply(graphMessage, DebugRedirectAddress!);
 
             NormalizeMessage(graphMessage);
             ValidateMessage(graphMessage, out var validationError);

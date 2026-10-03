@@ -12,6 +12,7 @@
   <ItemGroup>
     <PackageReference Include="Azure.Core" Version="1.50.0" />
     <PackageReference Include="Microsoft.Graph" Version="5.61.0" />
+    <Compile Include="..\GraphEmailSender.NetCore\DebugEmailRedirect.cs" Link="DebugEmailRedirect.cs" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.3" />
   </ItemGroup>
 

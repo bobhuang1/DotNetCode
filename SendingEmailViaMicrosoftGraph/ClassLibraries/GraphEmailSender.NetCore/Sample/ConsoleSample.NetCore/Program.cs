@@ -21,6 +21,12 @@ var credential = new ClientSecretCredential(tenantId, clientId, clientSecret);
 
 var emailSender = new GraphEmailSender(credential, senderMailbox);
 
+// Local runs: send everything to a test mailbox instead of the real recipients.
+if (string.Equals(Environment.GetEnvironmentVariable("IsLocalDebug"), "true", StringComparison.OrdinalIgnoreCase))
+{
+    emailSender.DebugRedirectAddress = Environment.GetEnvironmentVariable("DEBUG_REDIRECT_ADDRESS") ?? "bob@ibegroup.com";
+}
+
 var result = await emailSender.SendAsync(new SimpleEmailMessage
 {
     To = "recipient@example.com",

@@ -4,7 +4,10 @@
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
 
-    "TestRecipientEmailAddress": "developer@example.com",
-    "SenderMailboxAddress": "sender@example.com"
+    "TestRecipientEmailAddress": "bob@ibegroup.com",
+    "SenderMailboxAddress": "sender@example.com",
+
+    "IsLocalDebug": "true",
+    "DebugRedirectAddress": "bob@ibegroup.com"
   }
 }
