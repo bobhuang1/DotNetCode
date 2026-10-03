@@ -33,6 +33,10 @@ locals {
     "MultipleActiveResultSets=false",
     "",
   ])
+
+  # App settings point at the Key Vault secrets instead of holding the values.
+  sql_connection_string_reference   = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.sql_connection_string.versionless_id})"
+  redis_connection_string_reference = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.redis_connection_string.versionless_id})"
 }
 
 resource "azurerm_resource_group" "this" {

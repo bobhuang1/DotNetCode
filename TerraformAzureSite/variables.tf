@@ -93,3 +93,15 @@ variable "redis_capacity" {
   default     = 1
   description = "Premium capacity 1 = P1."
 }
+
+variable "key_vault_allowed_ip_ranges" {
+  type        = list(string)
+  default     = []
+  description = "Public IPs/CIDRs (e.g. the CI runner) allowed to reach the Key Vault data plane during apply. Empty keeps the vault private-endpoint only, which means apply must run from inside the VNet."
+}
+
+variable "key_vault_purge_protection_enabled" {
+  type        = bool
+  default     = false
+  description = "Enable Key Vault purge protection. Recommended for production; it cannot be turned off again and blocks re-creating a vault with the same name until soft-delete retention ends."
+}

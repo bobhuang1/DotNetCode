@@ -35,6 +35,21 @@ The `az` principal running the apply needs `Contributor` (or a scoped role)
 on the subscription/Resource Group and the **Key Vault Administrator** data-
 plane role to create the sample secrets (`azurerm_key_vault_secret`) with RBAC.
 
+The vault has public network access disabled, so the secret writes only work
+from a machine inside the VNet (for example a self-hosted runner). To apply
+from a laptop or a hosted runner, set `key_vault_allowed_ip_ranges` to its
+public IP; the vault then allows only those addresses and the private endpoint.
+
+The app and the staging slot read the SQL and Redis connection strings through
+**Key Vault references** (`@Microsoft.KeyVault(...)` app settings), so the SQL
+password and Redis key are not stored in the App Service configuration. They
+are still in Terraform state. For a password-free setup, switch the app to
+Microsoft Entra authentication for SQL (managed identity) and drop the
+connection-string secret.
+
+Set `key_vault_purge_protection_enabled = true` for production. It is off by
+default so a sample environment can be destroyed and re-created.
+
 ## Variables
 
 `terraform.tfvars.sample` has runnable defaults (regions, SKUs, tags). Names

@@ -72,8 +72,10 @@ resource "azurerm_monitor_autoscale_setting" "this" {
 }
 
 # The app itself. Runs from a zip deploy, uses the VNet for outbound traffic,
-# reads config from environment (Key Vault for secrets), and exposes a private
-# endpoint so Front Door Premium can reach it through a private link.
+# reads config from environment, and exposes a private endpoint so Front Door
+# Premium can reach it through a private link. Secrets are Key Vault references
+# (resolved by App Service with the app's managed identity over the VNet), so
+# the SQL password and Redis key never appear in the app settings themselves.
 resource "azurerm_linux_web_app" "this" {
   name                = "app-${local.unique}"
   location            = azurerm_resource_group.this.location
@@ -94,8 +96,8 @@ resource "azurerm_linux_web_app" "this" {
     "WEBSITE_RUN_FROM_PACKAGE"              = "1"
     "APPLICATIONINSIGHTS_CONNECTION_STRING" = azurerm_application_insights.this.connection_string
     "APPINSIGHTS_INSTRUMENTATIONKEY"        = azurerm_application_insights.this.instrumentation_key
-    "ConnectionStrings__DefaultConnection"  = local.sql_connection_string
-    "REDIS_CONNECTION"                      = azurerm_redis_cache.this.primary_connection_string
+    "ConnectionStrings__DefaultConnection"  = local.sql_connection_string_reference
+    "REDIS_CONNECTION"                      = local.redis_connection_string_reference
   }
 
   identity {
@@ -107,12 +109,14 @@ resource "azurerm_linux_web_app" "this" {
 
 # Same shape for the staging slot; a CI/CD pipeline deploys there then swaps.
 resource "azurerm_linux_web_app_slot" "staging" {
-  name           = "staging"
-  app_service_id = azurerm_linux_web_app.this.id
+  name                      = "staging"
+  app_service_id            = azurerm_linux_web_app.this.id
+  virtual_network_subnet_id = azurerm_subnet.app_integration.id
 
   site_config {
-    always_on           = true
-    minimum_tls_version = "1.2"
+    always_on              = true
+    minimum_tls_version    = "1.2"
+    vnet_route_all_enabled = true
     application_stack {
       dotnet_version = var.webapp_dotnet_version
     }
@@ -122,8 +126,8 @@ resource "azurerm_linux_web_app_slot" "staging" {
     "WEBSITE_RUN_FROM_PACKAGE"              = "1"
     "APPLICATIONINSIGHTS_CONNECTION_STRING" = azurerm_application_insights.this.connection_string
     "APPINSIGHTS_INSTRUMENTATIONKEY"        = azurerm_application_insights.this.instrumentation_key
-    "ConnectionStrings__DefaultConnection"  = local.sql_connection_string
-    "REDIS_CONNECTION"                      = azurerm_redis_cache.this.primary_connection_string
+    "ConnectionStrings__DefaultConnection"  = local.sql_connection_string_reference
+    "REDIS_CONNECTION"                      = local.redis_connection_string_reference
   }
 
   identity {
