@@ -1,0 +1,63 @@
+name: CI
+
+# The Pages deploy only runs on pushes to main, so a broken front end or an
+# unpublishable API project is currently discovered after merging. This runs on
+# every pull request that touches ReactSpa.
+on:
+  pull_request:
+    paths:
+      - "ReactSpa/**"
+      - ".github/workflows/ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  client:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ReactSpa/ClientApp
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: ReactSpa/ClientApp/package-lock.json
+
+      - run: npm ci
+
+      # `npm run build` is `tsc --noEmit && vite build`, so this covers both the
+      # type check and the bundle. Built with the Pages base prefix to catch a
+      # regression in asset resolution.
+      - name: Build
+        run: npm run build
+        env:
+          VITE_BASE_PATH: /DotNetCode/
+
+  api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      # ReactSpa.Api.csproj rebuilds and embeds the client during publish, so it
+      # needs node too.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # Guards the NETSDK1152 duplicate-publish failure: the SPA publish target
+      # claims the same wwwroot paths twice unless the earlier copy is removed.
+      - name: Publish API with embedded SPA
+        run: dotnet publish ReactSpa/ReactSpa.Api/ReactSpa.Api.csproj -c Release -o publish
