@@ -10,6 +10,30 @@ React app into the API's `wwwroot` so one web host serves everything.
 | `ReactSpa.Api/` | ASP.NET Core 10 minimal API (`/api/weather`, `/api/echo`) that serves the SPA from `wwwroot` when built |
 | `ClientApp/` | Vite + React + TypeScript SPA |
 
+## Live demo (GitHub Pages)
+
+**[Open the deployed demo](https://bobhuang1.github.io/DotNetCode/)**
+
+![The deployed demo in demo mode, with the banner explaining there is no API behind it](docs/demo-mode.png)
+
+The same SPA is published to GitHub Pages by `.github/workflows/pages.yml`.
+Because Pages can only host static files, there is no ASP.NET Core API behind
+that copy, so it runs in **demo mode**: `/api/*` is unreachable, and the app
+falls back to a forecast generated in the browser plus a local echo, and shows
+a banner saying so.
+
+The fallback is deliberately narrow. Only a *missing* API (network error, or
+404/405 from the static host) triggers it; a real API failure such as a 500
+still surfaces as an error, so a genuine server bug is never masked.
+
+Two settings make the difference between the two hosts:
+
+- `VITE_BASE_PATH` sets the Vite `base`. The Pages workflow builds with
+  `VITE_BASE_PATH=/DotNetCode/`; the default `/` is what the ASP.NET Core host
+  needs when it serves the build from its own `wwwroot` root. API calls are
+  resolved through `import.meta.env.BASE_URL`, so they follow the same prefix.
+- Run the app locally (below) to exercise the real endpoints.
+
 ## Run it (development)
 
 ```powershell

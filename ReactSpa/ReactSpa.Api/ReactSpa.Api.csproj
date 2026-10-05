@@ -32,6 +32,17 @@
   <Target Name="PublishClientApp" AfterTargets="ComputeFilesToPublish" Condition="Exists('$(SpaRoot)package.json')">
     <Exec Command="npm install" WorkingDirectory="$(SpaRoot)" />
     <Exec Command="npm run build" WorkingDirectory="$(SpaRoot)" />
+    <!--
+      CopySpaToWwwRoot already put dist into wwwroot on Build, so when dist
+      existed before publishing, the SDK's wwwroot items and the dist items
+      below claim the same relative paths and publishing fails with
+      NETSDK1152. Drop the earlier copy and let the freshly built dist be the
+      single source of truth. wwwroot is entirely generated, so nothing is lost.
+    -->
+    <ItemGroup>
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)"
+                             Condition="$([System.String]::Copy('%(RelativePath)').StartsWith('wwwroot'))" />
+    </ItemGroup>
     <ItemGroup>
       <DistFiles Include="$(SpaRoot)dist\**" />
       <ResolvedFileToPublish Include="@(DistFiles->'%(FullPath)')" Exclude="@(ResolvedFileToPublish)">
