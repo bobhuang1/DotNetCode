@@ -57,7 +57,12 @@ jobs:
         with:
           node-version: "22"
 
-      # Guards the NETSDK1152 duplicate-publish failure: the SPA publish target
-      # claims the same wwwroot paths twice unless the earlier copy is removed.
+      # Build the client first so the runner matches what a developer actually
+      # does: with dist/ already present, CopySpaToWwwRoot runs during Build and
+      # the publish target has to reconcile it with the freshly built dist.
+      - name: Build client
+        run: npm ci && npm run build
+        working-directory: ReactSpa/ClientApp
+
       - name: Publish API with embedded SPA
         run: dotnet publish ReactSpa/ReactSpa.Api/ReactSpa.Api.csproj -c Release -o publish
