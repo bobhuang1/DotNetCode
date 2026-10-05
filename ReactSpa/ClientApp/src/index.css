@@ -38,3 +38,17 @@ th, td {
   flex: 1;
   padding: 0.4rem;
 }
+.banner {
+  background: #fff8e1;
+  border: 1px solid #f0c36d;
+  border-left: 4px solid #d98e04;
+  border-radius: 4px;
+  padding: 0.75rem 1rem;
+  margin: 0 0 1.5rem;
+  color: #5c4400;
+}
+
+.banner strong {
+  color: #3d2c00;
+}
+

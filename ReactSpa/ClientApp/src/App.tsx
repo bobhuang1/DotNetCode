@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { echoMessage, getWeather, type WeatherForecast } from './api'
+import { apiMode, echoMessage, getWeather, type WeatherForecast } from './api'
 
 export default function App() {
   const [weather, setWeather] = useState<WeatherForecast[]>([])
@@ -7,12 +7,14 @@ export default function App() {
   const [draft, setDraft] = useState('')
   const [echo, setEcho] = useState('')
   const [error, setError] = useState('')
+  const [demoMode, setDemoMode] = useState(false)
 
   const refresh = async () => {
     setLoading(true)
     setError('')
     try {
       setWeather(await getWeather())
+      setDemoMode(apiMode() === 'demo')
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
@@ -29,6 +31,7 @@ export default function App() {
     setError('')
     try {
       setEcho(await echoMessage(draft))
+      setDemoMode(apiMode() === 'demo')
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     }
@@ -42,6 +45,15 @@ export default function App() {
         by ASP.NET Core from <code>wwwroot</code> in a published build. API calls
         go to <code>/api/*</code> either way.
       </p>
+
+      {demoMode && (
+        <p className="banner">
+          <strong>Demo mode.</strong> This copy is served as static files from
+          GitHub Pages, so there is no ASP.NET Core API behind it and the rows
+          below are generated in the browser. Clone the repo and run the API
+          locally to talk to the real endpoints.
+        </p>
+      )}
 
       <section>
         <h2>Weather from <code>/api/weather</code></h2>

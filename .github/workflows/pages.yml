@@ -1,0 +1,59 @@
+name: Deploy ReactSpa to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "ReactSpa/ClientApp/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ReactSpa/ClientApp
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: ReactSpa/ClientApp/package-lock.json
+
+      - run: npm ci
+
+      # The site is published under /DotNetCode/, so the bundle has to be built
+      # with that base prefix or every asset URL resolves from the domain root.
+      - name: Build
+        run: npm run build
+        env:
+          VITE_BASE_PATH: /DotNetCode/
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ReactSpa/ClientApp/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
